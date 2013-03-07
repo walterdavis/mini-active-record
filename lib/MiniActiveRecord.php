@@ -1,5 +1,5 @@
 <?php
-//TODO: factor in the date stuff
+//TODO: add in the date stuff
 
 // /**
 //  * return a date formatted for the database

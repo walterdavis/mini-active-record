@@ -1,4 +1,5 @@
 <?php
+// RENAME THIS FILE to config.inc.php to exempt it from Git tracking
 // ini_set('display_errors', 1);
 // error_reporting(E_ALL);
 define('MAR_DSN', 'mysql://username:password@hostname/databasename');
@@ -9,9 +10,6 @@ date_default_timezone_set('UTC');
 //this is the inflector from CakePHP
 require_once('lib/Inflector.php');
 //you may also use this one instead
-//require_once('MiniInflector.php');
+//require_once('lib/MiniInflector.php');
 require_once('lib/MiniActiveRecord.php');
-//include your classes here
-require_once('models/Car.php');
-require_once('models/Driver.php');
 ?>

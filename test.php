@@ -1,25 +1,12 @@
 <?php
-class Car extends MiniActiveRecord {
-  // public $has_many = 'roles';
-  // public $has_many_through = 'users:roles';
-  public $validations = 'presence:model regexp:year:/\d{4}/ presence:year';
-  public $has_and_belongs_to_many = 'drivers';
-  function description(){
-    return $this->year . ' ' . $this->color . ' ' . $this->model;
-  }
-}
-class Auto extends Car{
-  
-}
-class Driver extends MiniActiveRecord {
-  //public $belongs_to = 'user, project';
-  public $has_and_belongs_to_many = 'cars';
-  
-}
-// class User extends MiniActiveRecord {
-//   public $has_many = 'roles';
-//   public $has_many_through = 'projects:roles';
-// }
+require_once('config.inc.php');
+//include your classes here
+require_once('models/Car.php');
+//note the order here: Auto is an STI subclass of Car
+//it MUST load after its parent
+require_once('models/Auto.php');
+require_once('models/Driver.php');
+
 $auto = new Auto(a('model:T, year: 1890, color:black'));
 //$auto->save();
 $car = new Car();
