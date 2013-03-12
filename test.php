@@ -2,17 +2,20 @@
 require_once('config.inc.php');
 //include your classes here
 require_once('models/Car.php');
+require_once('models/Dent.php');
 //note the order here: Auto is an STI subclass of Car
 //it MUST load after its parent
-require_once('models/Auto.php');
 require_once('models/Driver.php');
-
-$auto = new Auto(a('model:T, year: 1890, color:black'));
-//$auto->save();
-$car = new Car();
-$driver = new Driver();
-// $project->create_link_table(new Role());
+require_once('models/Accident.php');
 header('Content-type: text/plain; charset=utf-8');
+$car = new Car();
+$dent = new Dent();
+$accident = new Accident();
+$jetta = $car->find_first();
+$crunch = $dent->create(a('name:crunch'));
+$jetta->add_dent($crunch);
+$jetta->save();
+// $project->create_link_table(new Role());
 // foreach($car->find_by_model('Mini') as $m){
 //   
 //   $m->inspect(false);
@@ -28,16 +31,37 @@ header('Content-type: text/plain; charset=utf-8');
 //     //print($r->identity());
 //   }
 // }
-$cait = $driver->find_first(a('where: name = "Caitlin"'));
-$walt = $driver->find_first(a('where: name = "Walter"'));
+// $cait = $driver->find_first(a('where: name = "Caitlin"'));
+// $walt = $driver->find_first(a('where: name = "Walter"'));
+// $lisa = $driver->find_first(a('where: name = "Lisa"'));
+// $bob = $driver->build(a('name:Bob'));
+// print_r($bob);
+// $jetta = $car->find_first();
+// $jetta->add_driver($bob);
+// $jetta->save();
+foreach($car->find_all() as $c) {
+  // $c->add_driver($walt);
+  // $c->add_driver($cait);
+  // $c->add_driver($lisa);
+  // $c->save();
+  print $c->description() . "\n";
+  foreach($c->dents as $d)  print_r( $d ) . "\n";
+}
 // $jetta = $car->find_first(a('where: model = "Jetta"'));
-$mini = new Car(a('model:Mini, color: red'));
+// $mini = $car->find_first(a('where:model="Mini" AND color="red"'));
 // print_r($mini);
-$mini->validate();
-print_r($mini->get_errors());
-$mini->year = 2009;
-$mini->validate();
-print_r($mini->save());
+// $mini->validate();
+// print_r($mini->get_errors());
+// $mini->year = 2010;
+// $mini->validate();
+// $mini->add_driver($walt);
+// $mini->add_driver($cait);
+//foreach($mini->drivers as $driver) print $driver->name . "\n";
+// $mini->save();
+// $mini->add_dent(new Dent(a('name:scratch')));
+// $mini->save();
+// foreach($auto->find_all() as $c) $c->save();
+// foreach($mini->dents as $dent) print $dent->car->inspect();
 
 // print_r($mini->reload());
 // $mini->model = 'Mini';
