@@ -1,41 +1,4 @@
 <?php
-//TODO: add in the date stuff
-
-// /**
-//  * return a date formatted for the database
-//  * @static
-//  * @param  int intTimeStamp  A unix timestamp
-//  * @return string  mysql format date string
-//  */
-// function DbDate($intTimeStamp=null)
-// {
-//  return date('Y-m-d', $intTimeStamp ? $intTimestamp:mktime() );
-// }
-// 
-// /**
-//  * return a datetime formatted for the database
-//  * @static
-//  * @param  int intTimeStamp  A unix timestamp
-//  * @return string  mysql format datetime string
-//  */  
-// function DbDateTime($intTimeStamp=null)
-// {
-//  return date('Y-m-d H:i:s', $intTimeStamp ? $intTimeStamp:mktime() );
-// }
-// 
-// /**
-//  * return a unix timestamp from a database field
-//  * @static
-//  * @param  string  mysql datetime
-//  * @return int unix timestamp  
-//  */
-// function TimeStamp($strMySQLDate)
-// {
-//  return strtotime($strMySQLDate,time());
-// }
-// 
-
-//maximum number of results from a find_all
 if(!defined('MAR_LIMIT')){
   define('MAR_LIMIT', 10000);
 }
@@ -58,11 +21,13 @@ class MiniActiveRecord{
   public $belongs_to = '';
   public $has_and_belongs_to_many = '';
   public $validations = '';
+  public $_dirty = true;
   private static $_cache = array();
   private static $_db;
   private static $_table;
   private static $_class;
   private static $_columns;
+  private static $_column_names;
   private static $_validations = array();
   private $_errors;
   function __construct($params = array()){
@@ -73,7 +38,7 @@ class MiniActiveRecord{
   }
   private function initialize(){
     try{
-      $params = @parse_url(MAR_DSN);
+      $params = parse_url(MAR_DSN);
       $dsn = sprintf('%s:host=%s;dbname=%s', $params['scheme'], $params['host'], str_replace('/','',$params['path']));
       $this->_db = new PDO($dsn, $params['user'],$params['pass'], array(
           PDO::ATTR_PERSISTENT => true
@@ -83,6 +48,7 @@ class MiniActiveRecord{
       if(empty($this->_class)) $this->_class = get_class($this);
       if(empty($this->_table)) $this->_table = $this->table();
       if(empty($this->_columns)) $this->_columns = $this->columns();
+      if(empty($this->_column_names)) $this->_column_names = array_keys($this->columns());
       if(empty($this->_validations)) $this->_validations = $this->validations();
       foreach($this->_columns as $key => $col){
         $this->$key = $col['Default'];
@@ -95,8 +61,9 @@ class MiniActiveRecord{
     $table = Inflector::tableize($this->_class);
     $tables = self::tables();
     $class = $this->_class;
-    while(!array_search($table, $tables) && $class != 'MiniActiveRecord'){
+    while(!array_search($table, $tables)){
       $class = get_parent_class($class);
+      if($class == 'MiniActiveRecord') break;
       $table = Inflector::tableize($class);
     }
     return $table;
@@ -140,26 +107,31 @@ class MiniActiveRecord{
     return $has_many;
   }
   private function has_many_through(){
-    $has_many = array();
+    $has_many_through = array();
     foreach(w($this->has_many_through) as $c){
       $c = explode(':', $c);
       $link_obj = $this->$c[1];
       foreach($link_obj as $lo){
-        $obj = $lo->$c[0];
+        $key = Inflector::singularize($c[0]);
+        $obj = $lo->$key;
         $has_many_through[$c[0]][$obj->id] = $obj;
       }
     }
     return $has_many_through;
   }
   private function validations(){
-    $validations = array();
     $rules = $this->validations;
-    if(is_string($rules)) $rules = w($rules);
-    foreach($rules as $v){
-      $v = explode(':', $v);
-      $validations[] = $v;
+    if(is_string($rules)){
+      $validations = array();
+      $rules = preg_split('/(?<!\\\);\s*/', $rules, -1, PREG_SPLIT_NO_EMPTY);
+      foreach($rules as $v){
+        $v = str_replace('\;',';',$v);
+        $v = preg_split('/(?<!\\\):\s*/', $v, -1, PREG_SPLIT_NO_EMPTY);
+        $validations[] = $v;
+      }
+      return $validations;
     }
-    return $validations;
+    return $this->validations();
   }
   private function has_and_belongs_to_many(){
     $has_and_belongs_to_many = array();
@@ -200,21 +172,59 @@ class MiniActiveRecord{
       $this->query($sql);
     }
   }
+  /**
+   * return a date formatted for the database
+   * @static
+   * @param  int time_stamp  A unix timestamp
+   * @return string  mysql format date string
+   */
+  private function db_date($time_stamp=null){
+   return date('Y-m-d', $time_stamp ? $time_stamp : mktime() );
+  }
+  
+  /**
+   * return a datetime formatted for the database
+   * @static
+   * @param  int time_stamp  A unix timestamp
+   * @return string  mysql format datetime string
+   */  
+  private function db_datetime($time_stamp=null){
+   return date('Y-m-d H:i:s', $time_stamp ? $time_stamp:mktime() );
+  }
+  
+  private function update_timestamps(){
+    if(!$this->persisted()){
+      if(in_array('created_at', $this->_column_names)) $this->created_at = $this->db_datetime();
+    }
+    if(in_array('updated_at', $this->_column_names)) $this->updated_at = $this->db_datetime();
+  }
+  
+  /**
+   * return a unix timestamp from a database formatted date
+   * @static
+   * @param  string  mysql datetime
+   * @return int unix timestamp  
+   */
+  function time_stamp($db_date_stamp){
+   return strtotime($db_date_stamp,time());
+  }
+  
   
   function find($id){
-    return array_pop($this->find_by_sql('SELECT * FROM `' . $this->_table . '` WHERE id = ' . $id));
+    if(is_array($id)){
+      $keys = array_fill(0, count($id), '?');
+      return $this->find_by_sql('SELECT * FROM `' . $this->_table . '` WHERE id IN(' . implode(',', $keys) . ')', $id);
+    }
+    return array_pop($this->find_by_sql('SELECT * FROM `' . $this->_table . '` WHERE id = ' . intval($id)));
   }
   function find_first($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => 1, 'offset' => 0), $options, array('limit' => 1));
     return array_pop(self::find_all($options));
   }
-  function where($where){
-    return $this->find_all(array('where' => $where));
-  }
   function find_all($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => MAR_LIMIT, 'offset' => 0), $options);
     $where = $limit = '';
-    $sti = (in_array('type', array_keys($this->_columns))) ? ' AND `type` = "' . $this->_class . '"' : '';
+    $sti = (in_array('type', $this->_column_names)) ? ' AND `type` = "' . $this->_class . '"' : '';
     $where = (!empty($options['where'])) ? ' WHERE 1 AND ' . $options['where'] : ' WHERE 1';
     if($options['limit'] + $options['offset'] > 0){
       $limit = ' LIMIT ' . $options['limit'] . ' OFFSET ' . $options['offset'];
@@ -229,11 +239,11 @@ class MiniActiveRecord{
     $result = $this->query($sql, $values);
     if(!!$result){
       if(array_key_exists($fingerprint, self::$_cache)){
-        //print "\n\nSatisfied from cache in “" . __FUNCTION__ . "”\n\n";
         return self::$_cache[$fingerprint];
       }
       while($row = $result->fetch(PDO::FETCH_ASSOC)){
-        $records[$row['id']] = $this->create($row);
+        $records[$row['id']] = $this->build($row);
+        $records[$row['id']]->_dirty = false;;
       }
     }
     return self::$_cache[$fingerprint] = $records;
@@ -241,15 +251,23 @@ class MiniActiveRecord{
   function query($sql, $values = array()){
     $statement = $this->_db->prepare($sql);
     $statement->execute($values);
+    // print($statement->queryString . ': (' . implode(', ', $values) . ")\n");
+    // $e = new Exception;
+    // print_r($e->getTraceAsString());
     return $statement;
   }
-  function create($arrVals = array()){
-    $obj = new $this->_class($arrVals);
+  function build($options = array()){
+    $obj = new $this->_class($options);
+    $obj->_dirty = true;
     return $obj;
+  }
+  function create($options=array()){
+    $obj = self::build($options);
+    return $obj->save();
   }
   private function save_without_callbacks(){
     $keys = $vals = $tokens = $set = array();
-    foreach(array_keys($this->_columns) as $col){
+    foreach($this->_column_names as $col){
       if($col != 'id'){
         if($col == 'type') $this->$col = $this->_class;
         $keys[] = "`$col`";
@@ -261,8 +279,7 @@ class MiniActiveRecord{
     $sql = ($this->persisted()) ? 'UPDATE ' : 'INSERT INTO ';
     $sql .= '`' . $this->_table . '` ';
     $sql .= ($this->persisted()) ? 'SET ' . implode(', ', $set) . ' WHERE `id` = ' . $this->id : '(' . implode(', ', $keys) . ') VALUES(' . implode(', ', $tokens) . ')';
-    $statement = $this->_db->prepare($sql);
-    $statement->execute($vals);
+    $this->query($sql, $vals);
     if(!$this->persisted()){
       $this->id = $this->_db->lastInsertId();
     }
@@ -274,20 +291,11 @@ class MiniActiveRecord{
     $this->after_validation();
     if($this->get_errors()) return false;
     $this->before_save();
+    $this->update_timestamps();
     $this->save_without_callbacks();
-    foreach(w($this->has_and_belongs_to_many) as $c){
-      $this->update_attached($c);
-    }
-    foreach(w($this->has_many) as $c){
-      $this->update_attached($c);
-    }
-    foreach(w($this->has_many_through) as $c){
-      $this->update_attached($c);
-    }
-    foreach(w($this->belongs_to) as $c){
-      $this->update_attached($c);
-    }
+    $this->update_associations();
     $this->after_save();
+    $this->_dirty = false;
     return $this;
   }
   function destroy(){
@@ -346,64 +354,106 @@ class MiniActiveRecord{
     $this->_errors[$field] = $error;
   }
   private function find_relationship($table){
-    if(strstr($this->has_many, $table)) return 'has_many';
-    if(strstr($this->has_many_through, "$table:")) return 'has_many_through';
-    if(strstr($this->belongs_to, "$table:")) return 'belongs_to';
+    if(preg_match('/\b' . $table . '\b/', $this->has_many)) return 'has_many';
+    if(preg_match('/\b' . $table . ':/', $this->has_many_through)) return 'has_many_through';
+    if(preg_match('/\b' . $table . '\b/', $this->belongs_to)) return 'belongs_to';
     $class = Inflector::classify($table);
     if(in_array($this->link_table(new $class()), $this->tables())) return 'has_and_belongs_to_many';
     return false;
   }
-  private function update_attached($relation){
-    $relationship = $this->find_relationship($relation);
-    $class = Inflector::classify($relation);
-    $obj = new $class();
-    switch($relationship){
-      case 'has_and_belongs_to_many':
-        $sql = 'DELETE FROM ' . $this->link_table($obj) . ' WHERE ' . $this->foreign_key() . ' = ' . $this->id;
-        $this->query($sql);
-        foreach($this->$relation as $o){
-          $sql = 'INSERT INTO ' . $this->link_table($obj) . ' (' . $this->foreign_key() . ', ' . $obj->foreign_key() . ') VALUES (' . $this->id . ', ' . $o->id . ')';
-          $this->query($sql);
-        }
-        break;
-      case 'has_many_through':
-      case 'has_many':
-        foreach($this->$relation as $o){
-          $key = $this->foreign_key();
-          $o->$k = $this->id;
-          $o->save();
-        }
-        break;
-      case 'belongs_to':
-        $key = $obj->foreign_key();
-        $this->$k = $obj->id;
-        $this->save_without_callbacks();
-        break;
-      default:
-        break;
+  private function load_associations(){
+    foreach(w('has_many has_many_through belongs_to has_and_belongs_to_many') as $a){
+      
     }
-    
+  }
+  
+  private function update_associations(){
+    $relations = array_merge($this->belongs_to(), $this->has_many(), $this->has_many_through(), $this->has_and_belongs_to_many());
+    foreach($relations as $relation => $object){
+      if(isset($this->$relation)){
+        $relationship = $this->find_relationship($relation);
+        $class = Inflector::classify($relation);
+        $obj = new $class();
+        switch($relationship){
+          case 'has_and_belongs_to_many':
+            $related = $this->$relation;
+            $sql = 'DELETE FROM ' . $this->link_table($obj) . ' WHERE ' . $this->foreign_key() . ' = ' . intval($this->id);
+            $this->query($sql);
+            foreach($related as $k => $o){
+              if($o->_dirty){
+                $related[$k] = $o->save();
+              }else{
+                $sql = 'INSERT INTO ' . $this->link_table($obj) . ' (' . $this->foreign_key() . ', ' . $obj->foreign_key() . ') VALUES (' . intval($this->id) . ', ' . intval($o->id) . ')';
+                $this->query($sql);
+              }
+            }
+            break;
+          case 'has_many_through':
+            foreach($this->$relation as $r){
+              if($r->_dirty) $r->save();
+            }
+            break;
+          case 'has_many':
+            foreach($this->$relation as $r){
+              if($r->_dirty) $r->save();
+            }
+            $ids = Inflector::singularize($relation) . '_ids';
+            $sql = 'UPDATE `' . $relation . '` SET ' . $this->foreign_key() . ' = NULL WHERE ' . $this->foreign_key() . ' = ' . intval($this->id);
+            $this->query($sql);
+            $sql = 'UPDATE `' . $relation . '` SET ' . $this->foreign_key() . ' = ' . $this->id . ' WHERE id IN(' . implode(',', $this->$ids) . ')';
+            $this->query($sql);
+            break;
+          case 'belongs_to':
+            $key = $obj->foreign_key();
+            if($obj->_dirty) $obj->save();
+            if($this->_dirty || $this->$key != $obj->id){
+              $this->$key = $obj->id;
+              $this->update_timestmaps();
+              $this->save_without_callbacks();
+            }
+            break;
+          default:
+            break;
+        }
+      }
+    }
   }
   function update_attributes($pairs){
     foreach($pairs as $key => $val){
       $this->$key = $val;
     }
-    return $this->save();
+    return $this->save_without_callbacks();
   }
   function __call($name, $arguments){
     if(substr($name, 0, 4) == 'add_'){
       $to_add = substr($name, 4);
       $key = Inflector::tableize($to_add);
       $obj = $arguments[0];
+      if(!$obj->persisted()) $obj->save();
+      if(preg_match('/' . $key . ':(.+?)\b/', $this->has_many_through, $matches)){
+        //add the join object
+        $key = $matches[1];
+        $current = $this->$key;
+        $join_obj = Inflector::classify($key);
+        $join_obj = new $join_obj();
+        $tfk = $this->foreign_key();
+        $ofk = $obj->foreign_key();
+        $jo = $join_obj->create(array($tfk => $this->id, $ofk => $obj->id));
+        $current[$jo->id] = $jo;
+        $this->$key = $current;
+        return self::$_cache[$key][$this->id] = $current;
+      }
       $current = $this->$key;
       $current[$obj->id] = $obj;
       $this->$key = $current;
-      if(strstr($this->has_and_belongs_to_many, $key)){
+      self::$_cache[$key][$this->id] = $current;
+      if(preg_match('/\b' . $key . '\b/', $this->has_and_belongs_to_many)){
         //add the inverse
         $key = Inflector::tableize($this->_class);
         $current = $obj->$key;
         $current[$this->id] = $this;
         $obj->$key = $current;
+        self::$_cache[$key][$obj->id] = $current;
       }
     }
     if(substr($name, 0, 7) == 'remove_'){
@@ -412,15 +462,24 @@ class MiniActiveRecord{
       $obj = $arguments[0];
       $current = $this->$key;
       unset($current[$obj->id]);
-      unset(self::$_cache[$key][$obj->id]);
+      self::$_cache[$key][$this->id] = $current;
       $this->$key = $current;
-      if(strstr($this->has_and_belongs_to_many, $key)){
+      if(preg_match('/' . $key . ':(.+?)\b/', $this->has_many_through, $matches)){
+        //remove the join object
+        $key = $matches[1];
+        $current = $this->$key;
+        $current[$obj->id]->destroy();
+        unset($current[$obj->id]);
+        $this->$key = $current;
+        self::$_cache[$key][$this->id] = $current;
+      }
+      if(preg_match('/\b' . $key . '\b/', $this->has_and_belongs_to_many)){
         //remove the inverse
         $key = Inflector::tableize($this->_class);
         $obj = $arguments[0];
         $current = $obj->$key;
         unset($current[$this->id]);
-        unset(self::$_cache[$key][$this->id]);
+        self::$_cache[$key][$obj->id] = $current;
         $obj->$key = $current;
       }
     }
@@ -428,7 +487,22 @@ class MiniActiveRecord{
       $keys = preg_split('/_and_/', substr($name, 8), -1, PREG_SPLIT_NO_EMPTY);
       $where = $options = array();
       foreach($keys as $key){
-        if(in_array($key, array_keys($this->_columns))){
+        if(in_array($key, $this->_column_names)){
+          $where[] = "`$key` = ?";
+        }
+      }
+      if((count($keys) + 1) == count($arguments)){
+        $options = array_pop($arguments);
+      }
+      $options['where'] = implode(' AND ', $where);
+      $options['values'] = $arguments;
+      return $this->find_first($options);
+    }
+    if(substr($name, 0, 12) == 'find_all_by_'){
+      $keys = preg_split('/_and_/', substr($name, 12), -1, PREG_SPLIT_NO_EMPTY);
+      $where = $options = array();
+      foreach($keys as $key){
+        if(in_array($key, $this->_column_names)){
           $where[] = "`$key` = ?";
         }
       }
@@ -439,6 +513,25 @@ class MiniActiveRecord{
       $options['values'] = $arguments;
       return $this->find_all($options);
     }
+    if(substr($name, 0, 18) == 'find_or_create_by_'){
+      $keys = preg_split('/_and_/', substr($name, 18), -1, PREG_SPLIT_NO_EMPTY);
+      $where = $options = $params = array();
+      foreach($keys as $key){
+        if(in_array($key, $this->_column_names)){
+          $where[] = "`$key` = ?";
+        }
+      }
+      if((count($keys) + 1) == count($arguments)){
+        $options = array_pop($arguments);
+      }
+      $options['where'] = implode(' AND ', $where);
+      $options['values'] = $arguments;
+      foreach($arguments as $k => $v){
+        $params[$keys[$k]] = $v;
+      }
+      if($match = $this->find_first($options)) return $match;
+      return $this->create($params);
+    }
   }
   function __set($name, $value){
     $this->$name = $value;
@@ -447,7 +540,7 @@ class MiniActiveRecord{
     if($this->persisted() && isset(self::$_cache[$name][$this->id])){
       return self::$_cache[$name][$this->id];
     }
-    if(strstr($this->belongs_to, $name)){
+    if(preg_match('/\b' . $name . '\b/', $this->belongs_to)){
       $class = Inflector::classify($name);
       $obj = new $class();
       $key = $name . '_id';
@@ -456,14 +549,21 @@ class MiniActiveRecord{
         return self::$_cache[$name][$this->id] = $k;
       }
     }
-    if(strstr($this->has_many, $name)){
+    if(preg_match('/\b' . $name . '\b/', $this->has_many)){
+      if(!$this->persisted()) return;
       $class = Inflector::classify($name);
       $obj = new $class();
       $key = $this->foreign_key();
       $k = $obj->find_all(array('where' => "$key = $this->id"));
       return self::$_cache[$name][$this->id] = $k;
     }
-    if(strstr($this->has_and_belongs_to_many, $name)){
+    if(substr($name, -4) == '_ids'){
+      $child_association = Inflector::tableize(substr($name, 0, -4));
+      $objs = $this->$child_association;
+      $k = pluck('id', $objs);
+      return self::$_cache[$name][$this->id] = $k;
+    }
+    if(preg_match('/\b' . $name . '\b/', $this->has_and_belongs_to_many) && $this->persisted()){
       $class = Inflector::classify($name);
       $obj = new $class();
       $key = $this->foreign_key();
@@ -545,5 +645,12 @@ function a($arguments){
   }
   return $ary;
 }
-
+//extract one key (column) from an array of objects
+function pluck($key, $array_of_objects){
+  $out = array();
+  foreach((array) $array_of_objects as $obj){
+    $out[] = $obj->$key;
+  }
+  return $out;
+}
 ?>
