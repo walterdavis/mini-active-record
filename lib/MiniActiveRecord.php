@@ -38,13 +38,7 @@ class MiniActiveRecord{
   }
   private function initialize(){
     try{
-      $params = parse_url(MAR_DSN);
-      $dsn = sprintf('%s:host=%s;dbname=%s', $params['scheme'], $params['host'], str_replace('/','',$params['path']));
-      $this->_db = new PDO($dsn, $params['user'],$params['pass'], array(
-          PDO::ATTR_PERSISTENT => true
-      ));
-      $this->_db->exec("SET NAMES '" . DB_CHARSET . "';");
-      $this->_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+      $this->connection();
       if(empty($this->_class)) $this->_class = get_class($this);
       if(empty($this->_table)) $this->_table = $this->table();
       if(empty($this->_columns)) $this->_columns = $this->columns();
@@ -56,6 +50,16 @@ class MiniActiveRecord{
     }catch(MARException $e){
       print $e->getMessage();
     }
+  }
+  private function connection(){
+    if(is_object($this->_db)) return $this->_db;
+    $params = parse_url(MAR_DSN);
+    $dsn = sprintf('%s:host=%s;dbname=%s', $params['scheme'], $params['host'], str_replace('/','',$params['path']));
+    $this->_db = new PDO($dsn, $params['user'],$params['pass'], array(
+        PDO::ATTR_PERSISTENT => true
+    ));
+    $this->_db->exec("SET NAMES '" . DB_CHARSET . "';");
+    $this->_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
   }
   private function table(){
     $table = Inflector::tableize($this->_class);
@@ -360,11 +364,6 @@ class MiniActiveRecord{
     $class = Inflector::classify($table);
     if(in_array($this->link_table(new $class()), $this->tables())) return 'has_and_belongs_to_many';
     return false;
-  }
-  private function load_associations(){
-    foreach(w('has_many has_many_through belongs_to has_and_belongs_to_many') as $a){
-      
-    }
   }
   
   private function update_associations(){

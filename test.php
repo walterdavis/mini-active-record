@@ -45,7 +45,10 @@ foreach($car->find_all() as $c) {
   // $c->add_driver($lisa);
   // $c->save();
   print $c->description() . "\n";
-  foreach($c->dents as $d)  print_r( $d ) . "\n";
+  foreach($c->dents as $d){
+    print_r( $d ) . "\n";
+    print_r($accident->find_by_dent_id_and_car_id($d->id, $c->id));
+  }
 }
 // $jetta = $car->find_first(a('where: model = "Jetta"'));
 // $mini = $car->find_first(a('where:model="Mini" AND color="red"'));
