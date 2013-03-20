@@ -9,7 +9,7 @@ if(!defined('DB_CHARSET')){
   define('DB_CHARSET', 'utf8');
 }
 /**
- * MiniActiveRecord is ActiveRecord in PHP 5.3+
+ * MiniActiveRecord is ActiveRecord in PHP 5.3+, in < 1,000 LOC
  * License: MIT
  *
  * @package MiniActiveRecord
@@ -30,12 +30,25 @@ class MiniActiveRecord{
   private static $_column_names;
   private static $_validations = array();
   private $_errors;
+  
+  /**
+   * Auto-construct a new MAR object
+   *
+   * @param array $params (optional, to pre-populate the object)
+   * @author Walter Lee Davis
+   */
   function __construct($params = array()){
     self::initialize();
     foreach($params as $key => $val){
       $this->$key = $val;
     }
   }
+  /**
+   * Build a new MAR object with database reflection
+   *
+   * @return void
+   * @author Walter Lee Davis
+   */
   private function initialize(){
     try{
       $this->connection();
@@ -51,6 +64,13 @@ class MiniActiveRecord{
       print $e->getMessage();
     }
   }
+  
+  /**
+   * singleton constructor for database connection
+   *
+   * @return PDO instance $_db set on this
+   * @author Walter Lee Davis
+   */
   private function connection(){
     if(is_object($this->_db)) return $this->_db;
     $params = parse_url(MAR_DSN);
@@ -61,6 +81,13 @@ class MiniActiveRecord{
     $this->_db->exec("SET NAMES '" . DB_CHARSET . "';");
     $this->_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
   }
+  
+  /**
+   * get the databse table for this object
+   *
+   * @return string actual table name (even in STI)
+   * @author Walter Lee Davis
+   */
   private function table(){
     $table = Inflector::tableize($this->_class);
     $tables = self::tables();
@@ -72,9 +99,23 @@ class MiniActiveRecord{
     }
     return $table;
   }
+  
+  /**
+   * is this object new (no id)?
+   *
+   * @return boolean
+   * @author Walter Lee Davis
+   */
   private function persisted(){
     return (isset($this->id) && $this->id > 0);
   }
+  
+  /**
+   * singleton get all tables (and their structure) from database
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
   private function tables(){
     static $tables = array();
     if(count($tables) < 1){
@@ -85,6 +126,13 @@ class MiniActiveRecord{
     }
     return $tables;
   }
+  
+  /**
+   * get all column names from an object
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
   private function columns(){
     static $cache = array();
     $table = $this->_table;
@@ -100,6 +148,13 @@ class MiniActiveRecord{
       }
     }
   }
+  
+  /**
+   * gets a nested array of all children of this object
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
   private function has_many(){
     $has_many = array();
     foreach(w($this->has_many) as $c){
@@ -110,6 +165,13 @@ class MiniActiveRecord{
     }
     return $has_many;
   }
+  
+  /**
+   * gets a nested array of all children of this object
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
   private function has_many_through(){
     $has_many_through = array();
     foreach(w($this->has_many_through) as $c){
@@ -123,6 +185,45 @@ class MiniActiveRecord{
     }
     return $has_many_through;
   }
+  
+  /**
+   * gets a nested array of many-to-many relatives
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
+  private function has_and_belongs_to_many(){
+    $has_and_belongs_to_many = array();
+    foreach(w($this->has_and_belongs_to_many) as $c){
+      $obj = $this->$c;
+      foreach($obj as $o){
+        $has_and_belongs_to_many[$c][$o->id] = $o;
+      }
+    }
+    return $has_and_belongs_to_many;
+  }
+  
+  /**
+   * gets a nested array of parent objects
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
+  private function belongs_to(){
+    $belongs_to = array();
+    foreach(w($this->belongs_to) as $c){
+      $obj = $this->$c;
+      $belongs_to[$c][$obj->id] = $obj;
+    }
+    return $belongs_to;
+  }
+
+  /**
+   * gets an array of validations and their arguments, ready to run in validate()
+   *
+   * @return array
+   * @author Walter Lee Davis
+   */
   private function validations(){
     $rules = $this->validations;
     if(is_string($rules)){
@@ -137,35 +238,48 @@ class MiniActiveRecord{
     }
     return $this->validations();
   }
-  private function has_and_belongs_to_many(){
-    $has_and_belongs_to_many = array();
-    foreach(w($this->has_and_belongs_to_many) as $c){
-      $obj = $this->$c;
-      foreach($obj as $o){
-        $has_and_belongs_to_many[$c][$o->id] = $o;
-      }
-    }
-    return $has_and_belongs_to_many;
-  }
-  private function belongs_to(){
-    $belongs_to = array();
-    foreach(w($this->belongs_to) as $c){
-      $obj = $this->$c;
-      $belongs_to[$c][$obj->id] = $obj;
-    }
-    return $belongs_to;
-  }
+  
+  /**
+   * gets a globally unique id to the current object (not used as of yet)
+   *
+   * @return string
+   * @author Walter Lee Davis
+   */
   function identity(){
     return md5(get_class($this) . $this->id);
   }
+  
+  /**
+   * gets the link table between the current object and the second object
+   * used in HABTM relationships
+   *
+   * @param object $second_model in HABT relationship with $this
+   * @return string
+   * @author Walter Lee Davis
+   */
   function link_table($second_model){
     $names = array($this->_table, $second_model->_table);
     sort($names);
     return implode('_', $names);
   }
+  
+  /**
+   * get the proper foreign key for this object
+   *
+   * @return string
+   * @author Walter Lee Davis
+   */
   function foreign_key(){
     return Inflector::singularize($this->_table) . '_id';
   }
+  
+  /**
+   * create a link table between the current object and the second model
+   *
+   * @param object $second_model 
+   * @return void
+   * @author Walter Lee Davis
+   */
   function create_link_table($second_model){
     if(!array_search($this->link_table($second_model), $this->tables())){
       $sql = 'CREATE TABLE `' . $this->link_table($second_model) . '` (
@@ -176,6 +290,7 @@ class MiniActiveRecord{
       $this->query($sql);
     }
   }
+  
   /**
    * return a date formatted for the database
    * @static
@@ -196,6 +311,12 @@ class MiniActiveRecord{
    return date('Y-m-d H:i:s', $time_stamp ? $time_stamp:mktime() );
   }
   
+  /**
+   * set any magic timestamp columns: created_at and updated_at
+   *
+   * @return void
+   * @author Walter Lee Davis
+   */
   private function update_timestamps(){
     if(!$this->persisted()){
       if(in_array('created_at', $this->_column_names)) $this->created_at = $this->db_datetime();
@@ -213,7 +334,13 @@ class MiniActiveRecord{
    return strtotime($db_date_stamp,time());
   }
   
-  
+  /**
+   * find by ID (or array of IDs)
+   *
+   * @param mixed $id integer or array of integers
+   * @return single object or array of objects
+   * @author Walter Lee Davis
+   */
   function find($id){
     if(is_array($id)){
       $keys = array_fill(0, count($id), '?');
@@ -221,10 +348,27 @@ class MiniActiveRecord{
     }
     return array_pop($this->find_by_sql('SELECT * FROM `' . $this->_table . '` WHERE id = ' . intval($id)));
   }
+  
+  /**
+   * find the first object matching the $options array
+   *
+   * @param array $options 
+   * @return object or false
+   * @author Walter Lee Davis
+   */
   function find_first($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => 1, 'offset' => 0), $options, array('limit' => 1));
-    return array_pop(self::find_all($options));
+    if($obj = array_pop(self::find_all($options))) return $obj;
+    return false;
   }
+  
+  /**
+   * find all objects matching the options array
+   *
+   * @param array $options 
+   * @return array
+   * @author Walter Lee Davis
+   */
   function find_all($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => MAR_LIMIT, 'offset' => 0), $options);
     $where = $limit = '';
@@ -237,6 +381,16 @@ class MiniActiveRecord{
     $values = isset($options['values']) ? $options['values'] : array();
     return $this->find_by_sql('SELECT * FROM `' . $this->_table . '`' . $where . $sti . $order . $limit, $values);
   }
+  
+  /**
+   * find objects matching a sql query
+   * the query should have placeholders for the array of values for best effect
+   *
+   * @param string $sql query with placeholders
+   * @param array $values to replace the placeholders
+   * @return array
+   * @author Walter Lee Davis
+   */
   function find_by_sql($sql, $values = array()){
     $fingerprint = md5($sql);
     $records = array();
@@ -252,6 +406,15 @@ class MiniActiveRecord{
     }
     return self::$_cache[$fingerprint] = $records;
   }
+  
+  /**
+   * run a query, replacing placeholders
+   *
+   * @param string $sql 
+   * @param array $values 
+   * @return PDO statement
+   * @author Walter Lee Davis
+   */
   function query($sql, $values = array()){
     $statement = $this->_db->prepare($sql);
     $statement->execute($values);
@@ -260,15 +423,38 @@ class MiniActiveRecord{
     // print_r($e->getTraceAsString());
     return $statement;
   }
+  
+  /**
+   * instantiate an object without saving it
+   *
+   * @param array $options 
+   * @return object
+   * @author Walter Lee Davis
+   */
   function build($options = array()){
     $obj = new $this->_class($options);
     $obj->_dirty = true;
     return $obj;
   }
+  
+  /**
+   * build and save an object and return it
+   *
+   * @param array $options 
+   * @return object
+   * @author Walter Lee Davis
+   */
   function create($options=array()){
     $obj = self::build($options);
     return $obj->save();
   }
+  
+  /**
+   * save an object without calling any validations or callbacks
+   *
+   * @return object
+   * @author Walter Lee Davis
+   */
   private function save_without_callbacks(){
     $keys = $vals = $tokens = $set = array();
     foreach($this->_column_names as $col){
@@ -289,6 +475,13 @@ class MiniActiveRecord{
     }
     return $this;
   }
+  
+  /**
+   * run all callbacks and save the object
+   *
+   * @return object
+   * @author Walter Lee Davis
+   */
   function save(){
     $this->before_validation();
     $this->validate();
@@ -302,12 +495,26 @@ class MiniActiveRecord{
     $this->_dirty = false;
     return $this;
   }
+  
+  /**
+   * destroy an object
+   *
+   * @return object
+   * @author Walter Lee Davis
+   */
   function destroy(){
     if($this->get_errors()) return false;
     $sql = 'DELETE FROM `' . $this->_table . '` WHERE `id` = ' . $this->id;
     $this->_db->query($sql);
     return $this;
   }
+  
+  /**
+   * run all registered validations
+   *
+   * @return void
+   * @author Walter Lee Davis
+   */
   function validate(){
     $this->_errors = null;
     foreach( $this->_validations as $v){
@@ -318,6 +525,15 @@ class MiniActiveRecord{
     }
     return true;
   }
+  
+  /**
+   * tests for presence of a column in the object
+   *
+   * @param string $key column
+   * @param string $message optional
+   * @return boolean
+   * @author Walter Lee Davis
+   */
   private function validate_presence($key, $message = null){
     if(!$message){
       $message = Inflector::humanize($key) . ' cannot be empty';
@@ -328,6 +544,16 @@ class MiniActiveRecord{
     }
     return true;
   }
+  
+  /**
+   * tests for a match to a regexp on a column
+   *
+   * @param string $key column
+   * @param string $regexp should match, include delimiters and modifiers
+   * @param string $message optional
+   * @return boolean
+   * @author Walter Lee Davis
+   */
   private function validate_regexp($key, $regexp, $message = null){
     if(!$message){
       $message = Inflector::humanize($key) . ' is not valid';
@@ -338,25 +564,67 @@ class MiniActiveRecord{
     }
     return true;
   }
+  
+  /**
+   * combination of presence and regexp matching an email
+   *
+   * @param string $key column
+   * @param string $message optional
+   * @return boolean
+   * @author Walter Lee Davis
+   */
   private function validate_email($key = 'email', $message = 'That didn’t look like an e-mail address'){
     if(!$this->validate_presence($key)) return false;
     return $this->validate_regexp($key, '/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,8}$/i', $message);
   }
+  
+  /**
+   * gather all errors from the current object
+   * DOES NOT call validate(), do that first
+   *
+   * @return array or false
+   * @author Walter Lee Davis
+   */
   function get_errors(){
     if(count($this->_errors) > 0){
       return $this->_errors;
     }
     return false;
   }
+  
+  /**
+   * get an error for a single column
+   *
+   * @param string $key column
+   * @return string error message
+   * @author Walter Lee Davis
+   */
   function get_error($key){
     if(count($this->_errors) > 0 && isset($this->_errors[$key])){
       return $this->_errors[$key];
     }
     return false;
   }
+  
+  /**
+   * add an error to a column
+   *
+   * @param string $field column
+   * @param string $error error message
+   * @return void
+   * @author Walter Lee Davis
+   */
   private function add_error($field, $error){
     $this->_errors[$field] = $error;
   }
+  
+  /**
+   * find relationship between this object and another
+   *
+   * @param string $table foreign object table name
+   * @return string relationship name
+   * @author Walter Lee Davis
+   */
   private function find_relationship($table){
     if(preg_match('/\b' . $table . '\b/', $this->has_many)) return 'has_many';
     if(preg_match('/\b' . $table . ':/', $this->has_many_through)) return 'has_many_through';
@@ -366,6 +634,12 @@ class MiniActiveRecord{
     return false;
   }
   
+  /**
+   * save all related records
+   *
+   * @return void
+   * @author Walter Lee Davis
+   */
   private function update_associations(){
     $relations = array_merge($this->belongs_to(), $this->has_many(), $this->has_many_through(), $this->has_and_belongs_to_many());
     foreach($relations as $relation => $object){
@@ -417,12 +691,29 @@ class MiniActiveRecord{
       }
     }
   }
+  
+  /**
+   * update a bunch of columns on the object
+   *
+   * @param array $pairs key => val pairs of columns and new values
+   * @return object
+   * @author Walter Lee Davis
+   */
   function update_attributes($pairs){
     foreach($pairs as $key => $val){
       $this->$key = $val;
     }
     return $this->save_without_callbacks();
   }
+  
+  /**
+   * magic setters -- called when a function doesn't exist
+   *
+   * @param string $name function called
+   * @param array $arguments 
+   * @return void updates $this
+   * @author Walter Lee Davis
+   */
   function __call($name, $arguments){
     if(substr($name, 0, 4) == 'add_'){
       $to_add = substr($name, 4);
@@ -532,9 +823,26 @@ class MiniActiveRecord{
       return $this->create($params);
     }
   }
+  
+  /**
+   * public setter to work around private variables
+   *
+   * @param string $name 
+   * @param string $value 
+   * @return void
+   * @author Walter Lee Davis
+   */
   function __set($name, $value){
     $this->$name = $value;
   }
+  
+  /**
+   * magic getter -- called when a property doesn't exist
+   *
+   * @param string $name property requested
+   * @return string requested property
+   * @author Walter Lee Davis
+   */
   function __get($name){
     if($this->persisted() && isset(self::$_cache[$name][$this->id])){
       return self::$_cache[$name][$this->id];
@@ -582,9 +890,25 @@ class MiniActiveRecord{
       return self::$_cache[$name][$this->id] = $out;
     }
   }
+  
+  /**
+   * force a lookup from the database
+   *
+   * @return void
+   * @author Walter Lee Davis
+   */
   function reload(){
+    if($this->persisted())
     return $this->find($this->id);
   }
+  
+  /**
+   * pretty-print the object
+   *
+   * @param boolean $show_empty_values
+   * @return stdout
+   * @author Walter Lee Davis
+   */
   function inspect($show_empty_values = true){
     if(is_object($this)){
       print "\n\n" . $this->_class . "\n\n";

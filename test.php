@@ -12,8 +12,8 @@ $car = new Car();
 $dent = new Dent();
 $accident = new Accident();
 $jetta = $car->find_first();
-$crunch = $dent->create(a('name:crunch'));
-$jetta->add_dent($crunch);
+// $crunch = $dent->create(a('name:crunch'));
+$jetta->add_dent($dent->create(a('name:scrape')));
 $jetta->save();
 // $project->create_link_table(new Role());
 // foreach($car->find_by_model('Mini') as $m){
