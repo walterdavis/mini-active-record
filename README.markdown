@@ -58,7 +58,7 @@ Each model has basic validations built into it, and you can extend your own mode
 
 Validations are defined using the following DSL: 
 
-    $validations = 'function:attribute:argument; attribute:function:argument[:argument]';
+    $validations = 'function:attribute:argument; function:attribute:argument[:argument]';
     //for example:
     $validations = 'presence:name; email:email; regexp:phone:/\(?\d{3}\)?[\-\s]\d{3}\-\d{4}/';
     
