@@ -2,7 +2,9 @@
 
 MiniActiveRecord is the spiritual successor to MyActiveRecord, by Jake Grimley. Like that library, it aims to provide a simple, fast ORM in PHP to implement Martin Fowler's ActiveRecord pattern. It looks longingly at Rails' implementation of the same pattern, and borrows some of its tricks. The design goal is to reduce the number of lines of code needed to get something done, rather than to provide a textbook example of pure performance-centered programming.
 
-MiniActiveRecord requires PHP 5.1 or better, and has only been tested with 5.3. It uses PDO (PHP Data Objects) to interface with the database, so you must have compiled that module into PHP as well (it's on by default in 5.3). It is developed with a zero-errors policy; no function calls are silenced and error reporting is on, set to kill (well, `E_ALL`). Naturally, you should disable this preference in production.
+MiniActiveRecord requires PHP 5.1 or better, and has only been tested with 5.3. It uses PDO (PHP Data Objects) to interface with the database, so you must have compiled that module into PHP as well (it's on by default in 5.3). This means that you should be able to use databases other than just MySQL, although I have not tested this myself.
+
+It is developed with a zero-errors policy; no function calls are silenced and error reporting is on, set to kill (well, `E_ALL`). Naturally, you should disable this preference in production.
 
 ##MIT License:
 

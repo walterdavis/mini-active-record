@@ -511,7 +511,11 @@ class MiniActiveRecord{
     $this->validate();
     $this->after_validation();
     if($this->get_errors()) return false;
-    $this->before_save();
+    if($this->persisted()){
+      if(false === $this->before_save()) return false;
+    }else{
+      if(false === $this->before_create()) return false;
+    }
     $this->update_timestamps();
     $this->save_without_callbacks();
     $this->update_associations();
@@ -528,6 +532,7 @@ class MiniActiveRecord{
    */
   function destroy(){
     if($this->get_errors()) return false;
+    if(false === $this->before_destroy()) return false;
     $sql = 'DELETE FROM `' . $this->_table . '` WHERE `id` = ' . $this->id;
     $this->_db->query($sql);
     return $this;
@@ -950,6 +955,9 @@ class MiniActiveRecord{
   public function before_save(){
     return true;
   }
+  public function before_create(){
+    return true;
+  }
   public function after_save(){
     return true;
   }
@@ -957,6 +965,9 @@ class MiniActiveRecord{
     return true;
   }
   public function after_validation(){
+    return true;
+  }
+  public function before_destroy(){
     return true;
   }
 }
