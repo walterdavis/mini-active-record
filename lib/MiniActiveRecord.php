@@ -39,7 +39,7 @@ class MiniActiveRecord{
    */
   function __construct($params = array()){
     self::initialize();
-    $this->populate($params);
+    $this->populate($params, true);
   }
   /**
    * Build a new MAR object with database reflection
@@ -151,12 +151,13 @@ class MiniActiveRecord{
    * update an object from an array
    *
    * @param array $params 
+   * @param boolean $include_id 
    * @return object $this
    * @author Walter Lee Davis
    */
-  public function populate($params = array()){
+  public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
-      $this->$key = $val;
+      if($key != 'id' || $include_id) $this->$key = $val;
     }
     return $this;
   }
