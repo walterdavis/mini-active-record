@@ -1,0 +1,18 @@
+body {
+  background-color: #eee;
+  color: #333;
+  font: 13px/1.4 "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", "Lucida", sans-serif;
+}
+
+#PageDiv {
+  max-width: 700px;
+  width: 80%;
+  margin: 3em auto;
+  background-color: #fff;
+  padding: 2em 4em;
+  border: 1px solid #ccc;
+}
+
+label {
+  display: block;
+}
