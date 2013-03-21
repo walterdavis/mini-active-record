@@ -383,6 +383,30 @@ class MiniActiveRecord{
   }
   
   /**
+   * count the objects that match the parameters (or all of them)
+   *
+   * @param array $options 
+   * @return integer
+   * @author Walter Lee Davis
+   */
+  function count($options = array()){
+    $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => MAR_LIMIT, 'offset' => 0), $options);
+    $where = $limit = '';
+    $sti = (in_array('type', $this->_column_names)) ? ' AND `type` = "' . $this->_class . '"' : '';
+    $where = (!empty($options['where'])) ? ' WHERE 1 AND ' . $options['where'] : ' WHERE 1';
+    if($options['limit'] + $options['offset'] > 0){
+      $limit = ' LIMIT ' . $options['limit'] . ' OFFSET ' . $options['offset'];
+    }
+    $values = isset($options['values']) ? $options['values'] : array();
+    $result = $this->query('SELECT COUNT(*) AS _count FROM `' . $this->_table . '`' . $where . $sti . $limit, $values);
+    if(!!$result){
+      if($row = $result->fetch(PDO::FETCH_ASSOC))
+        return $row['_count'];
+    }
+    return 0;
+  }
+
+  /**
    * find objects matching a sql query
    * the query should have placeholders for the array of values for best effect
    *
