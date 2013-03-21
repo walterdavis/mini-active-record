@@ -6,11 +6,18 @@
  */
 require_once('../config.inc.php');
 /**
- * example showing two different ways to call validate_presence, with
- * and without a custom error message
+ * SQL to create example table
  *
+ * CREATE TABLE `comments` (
+ *   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+ *   `name` varchar(255) NOT NULL,
+ *   `body` text NOT NULL,
+ *   `created_at` datetime NOT NULL,
+ *   PRIMARY KEY (`id`)
+ * ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
  */
 class Comment extends MiniActiveRecord{
+  // two different ways to call validate_presence: with and without a custom error message
   public $validations = 'presence:name; presence:body:Didn\'t you have anything to say?';
 }
 
@@ -54,9 +61,6 @@ $comments = $comment->find_all(a('order: created_at DESC'));
   <meta charset="utf-8" />
   <title>MiniActiveRecord Example</title>
   <link rel="stylesheet" type="text/css" media="screen" href="css/style.css" />
-  <!--[if IE]>
-  <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-  <![endif]-->
 </head>
 <body>
   <div id="PageDiv">
