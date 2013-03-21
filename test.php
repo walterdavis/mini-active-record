@@ -10,11 +10,12 @@ require_once('models/Accident.php');
 header('Content-type: text/plain; charset=utf-8');
 $car = new Car();
 $dent = new Dent();
-$accident = new Accident();
-$jetta = $car->find_first();
-$crunch = $dent->create(a('name:crunch'));
-$jetta->add_dent($crunch);
-$jetta->save();
+$driver = new Driver();
+// $accident = new Accident();
+// $jetta = $car->find_first();
+// // $crunch = $dent->create(a('name:crunch'));
+// $jetta->add_dent($dent->create(a('name:scrape')));
+// $jetta->save();
 // $project->create_link_table(new Role());
 // foreach($car->find_by_model('Mini') as $m){
 //   
@@ -31,24 +32,26 @@ $jetta->save();
 //     //print($r->identity());
 //   }
 // }
-// $cait = $driver->find_first(a('where: name = "Caitlin"'));
-// $walt = $driver->find_first(a('where: name = "Walter"'));
-// $lisa = $driver->find_first(a('where: name = "Lisa"'));
-// $bob = $driver->build(a('name:Bob'));
+$cait = $driver->find_first(a('where: name = "Caitlin"'));
+$walt = $driver->find_first(a('where: name = "Walter"'));
+$lisa = $driver->find_first(a('where: name = "Lisa"'));
+$bob = $driver->build(a('name:Bob'));
 // print_r($bob);
 // $jetta = $car->find_first();
 // $jetta->add_driver($bob);
 // $jetta->save();
 foreach($car->find_all() as $c) {
   // $c->add_driver($walt);
-  // $c->add_driver($cait);
-  // $c->add_driver($lisa);
-  // $c->save();
-  print $c->description() . "\n";
-  foreach($c->dents as $d){
-    print_r( $d ) . "\n";
-    print_r($accident->find_by_dent_id_and_car_id($d->id, $c->id));
-  }
+  //   $c->add_driver($cait);
+  //   $c->add_driver($lisa);
+  //   $c->save();
+    print $c->description() . "\n";
+  // foreach($c->dents as $d){
+  //   print_r( $d ) . "\n";
+  //   print_r($accident->find_by_dent_id_and_car_id($d->id, $c->id));
+  // }
+  // print_r($c->drivers);
+  foreach($c->drivers as $d) print $d->name . "\n";
 }
 // $jetta = $car->find_first(a('where: model = "Jetta"'));
 // $mini = $car->find_first(a('where:model="Mini" AND color="red"'));
