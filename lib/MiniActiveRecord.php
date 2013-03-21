@@ -39,9 +39,7 @@ class MiniActiveRecord{
    */
   function __construct($params = array()){
     self::initialize();
-    foreach($params as $key => $val){
-      $this->$key = $val;
-    }
+    $this->populate($params);
   }
   /**
    * Build a new MAR object with database reflection
@@ -147,6 +145,20 @@ class MiniActiveRecord{
         return $cache[$table] = $fields;
       }
     }
+  }
+  
+  /**
+   * update an object from an array
+   *
+   * @param array $params 
+   * @return object $this
+   * @author Walter Lee Davis
+   */
+  public function populate($params = array()){
+    foreach($params as $key => $val){
+      $this->$key = $val;
+    }
+    return $this;
   }
   
   /**
