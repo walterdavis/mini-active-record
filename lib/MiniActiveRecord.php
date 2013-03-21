@@ -952,6 +952,7 @@ class MiniActiveRecord{
   }
   
   //callbacks -- extend in your subclass
+  //these are called automatically in save and destroy
   public function before_save(){
     return true;
   }
