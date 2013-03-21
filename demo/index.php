@@ -15,7 +15,7 @@ if(isset($_POST['commit'])){
   $comment->save();
   $errors = $comment->get_errors();
   if($errors){
-    $errors = '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
+    $errors = '<ul><li>' . implode('</li><li>', (array)$errors) . '</li></ul>';
   }else{
     header('Location: index.php');
     exit;
@@ -37,10 +37,10 @@ $comments = $comment->find_all(a('order: created_at DESC'));
   <div id="PageDiv">
     <h1 id="miniactiverecord_example">MiniActiveRecord Example</h1>
     <p>This is a simple example of a form handler made with MiniActiveRecord.</p>
-    <ul>
+    <ul class="comments">
       <?php
       foreach($comments as $c){
-        print '<li>' . h($c->body) . '<br />' . h($c->name) . ' (' . $c->created_at . ') <a href="?id=' . $c->id . '">edit</a></li>';
+        print '<li><span class="name">' . h($c->name) . '</span>' . h($c->body) . '<span class="metadata"><span class="date">(' . $c->created_at . ')</span> <a href="?id=' . $c->id . '" class="edit_link">edit</a></span></li>';
       }
       ?>
     </ul>

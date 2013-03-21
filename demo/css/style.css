@@ -16,3 +16,31 @@ body {
 label {
   display: block;
 }
+
+.comments {
+  list-style-type: none;
+  margin: 1em 0;
+  padding: 0;
+}
+
+.comments li {
+  margin: 1em 0;
+  padding: 0;
+  overflow: auto;
+}
+
+.name, .date {
+  float: left;
+  margin-right: .5em;
+  color: #666;
+}
+
+.edit {
+  color: #666;
+  float: right;
+}
+
+.metadata {
+  display: block;
+  overflow: auto;
+}
