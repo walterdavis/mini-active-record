@@ -14,7 +14,7 @@ class Comment extends MiniActiveRecord{
   public $validations = 'presence:name; presence:body:Didn\'t you have anything to say?';
 }
 // used for visible error message later on
-$errors = '';
+$errors = $flash_class = '';
 // create a new blank instance of Comment to use everywhere
 $comment = new Comment();
 
@@ -35,6 +35,7 @@ if(isset($_POST['commit'])){
   if($errors){
     // pretty-print the errors and fall through
     $errors = '<ul><li>' . implode('</li><li>', (array)$errors) . '</li></ul>';
+    $flash_class = ' error';
   }else{
     // redirect
     header('Location: index.php');
@@ -66,7 +67,7 @@ $comments = $comment->find_all(a('order: created_at DESC'));
       }
       ?>
     </ul>
-    <div id="flash">
+    <div class="flash<?= $flash_class ?>">
       <?= $errors ?>
     </div>
     <form action="" method="post" accept-charset="utf-8">

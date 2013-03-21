@@ -56,3 +56,9 @@ label {
   padding: .5em 0;
   border-bottom: 2px solid #eee;
 }
+
+.flash.error {
+  padding: 0 1em;
+  border: 1px solid #993A2A;
+  background-color: #F4BFB3;
+}
