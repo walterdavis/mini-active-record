@@ -31,16 +31,28 @@ label {
 
 .name, .date {
   float: left;
+  display: inline-block;
   margin-right: .5em;
   color: #666;
 }
 
-.edit {
+.name {
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  background-color: #eee;
+}
+
+.edit_link {
   color: #666;
   float: right;
+  display: inline-block;
 }
 
 .metadata {
   display: block;
+  clear: both;
   overflow: auto;
+  padding: .5em 0;
+  border-bottom: 2px solid #eee;
 }
