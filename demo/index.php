@@ -13,15 +13,18 @@ require_once('../config.inc.php');
 class Comment extends MiniActiveRecord{
   public $validations = 'presence:name; presence:body:Didn\'t you have anything to say?';
 }
-// used for visible error message later on
-$errors = $flash_class = '';
+
+// declare some variables for later
+$errors = $flash_class = $key = '';
+
 // create a new blank instance of Comment to use everywhere
 $comment = new Comment();
 
 // if we are editing, then switch $comment to that instance (if it exists)
-if(isset($_GET['id'])){
-  if($edit = $comment->find($_GET['id'])){
+if(isset($_REQUEST['id'])){
+  if($edit = $comment->find($_REQUEST['id'])){
     $comment = $edit;
+    $key = '<input type="hidden" name="id" value="' . $comment->id . '" />';
   }
 }
 
@@ -70,8 +73,8 @@ $comments = $comment->find_all(a('order: created_at DESC'));
     <div class="flash<?= $flash_class ?>">
       <?= $errors ?>
     </div>
-    <form action="" method="post" accept-charset="utf-8">
-      <p><label for="comment_name">Name</label><input type="text" name="comment[name]" value="<?= h($comment->name) ?>" id="comment_name"/></p>
+    <form action="index.php" method="post" accept-charset="utf-8">
+      <p><?= $key ?><label for="comment_name">Name</label><input type="text" name="comment[name]" value="<?= h($comment->name) ?>" id="comment_name"/></p>
       <p><label for="comment_body">Add a Comment</label><textarea id="comment_body" name="comment[body]" rows="8" cols="40"><?= h($comment->body) ?></textarea></p>
       <p><input type="submit" name="commit" value="Say it!"/></p>
     </form>
