@@ -24,7 +24,7 @@ class MiniActiveRecord{
   public $_dirty = true;
   private static $_cache = array();
   private static $_db;
-  private static $_table;
+  public static $_table;
   private static $_class;
   private static $_columns;
   private static $_column_names;
@@ -331,9 +331,7 @@ class MiniActiveRecord{
    * @author Walter Lee Davis
    */
   private function update_timestamps(){
-    if(!$this->persisted()){
-      if(in_array('created_at', $this->_column_names)) $this->created_at = $this->db_datetime();
-    }
+    if(in_array('created_at', $this->_column_names)) $this->created_at = $this->db_datetime($this->time_stamp($this->created_at));
     if(in_array('updated_at', $this->_column_names)) $this->updated_at = $this->db_datetime();
   }
   
@@ -523,11 +521,11 @@ class MiniActiveRecord{
     $this->before_validation();
     $this->validate();
     $this->after_validation();
-    if($this->get_errors()) return false;
+    if($this->get_errors()) return;
     if($this->persisted()){
-      if(false === $this->before_save()) return false;
+      if(false === $this->before_save()) return;
     }else{
-      if(false === $this->before_create()) return false;
+      if(false === $this->before_create()) return;
     }
     $this->update_timestamps();
     $this->save_without_callbacks();

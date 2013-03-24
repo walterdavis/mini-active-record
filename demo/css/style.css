@@ -7,7 +7,7 @@ body {
 #PageDiv {
   max-width: 700px;
   width: 80%;
-  margin: 3em auto;
+  margin: 3em auto 1em;
   background-color: #fff;
   padding: 2em 4em;
   border: 1px solid #ccc;
@@ -17,13 +17,13 @@ label {
   display: block;
 }
 
-.comments {
+.messages {
   list-style-type: none;
   margin: 1em 0;
   padding: 0;
 }
 
-.comments li {
+.messages li {
   margin: 1em 0;
   padding: 0;
   overflow: auto;
@@ -56,10 +56,43 @@ label {
   overflow: auto;
   padding: .5em 0;
   border-bottom: 2px solid #eee;
+  color: #888;
+  font-size: smaller;
 }
 
 .flash.error {
   padding: 0 1em;
   border: 1px solid #993A2A;
   background-color: #F4BFB3;
+}
+
+footer {
+  font-size: smaller;
+  text-align: center;
+  color: #888;
+  margin-bottom: 4em;
+}
+
+a {
+  color: #273499;
+}
+
+span.commenter {
+  display: block;
+  color: #777;
+  padding-bottom: .3em;
+}
+
+fieldset {
+  border: 1px solid #ccc;
+  padding: 0.3em 2em;
+}
+
+fieldset input, fieldset textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+fieldset input[type="submit"] {
+  width: auto;
 }

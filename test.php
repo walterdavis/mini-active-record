@@ -1,4 +1,9 @@
 <?php
+/**
+ * This is mostly a lot of commented out stuff I used while writing the core library. Ignore.
+ *
+ * @author Walter Lee Davis
+ */
 require_once('config.inc.php');
 //include your classes here
 require_once('models/Car.php');
