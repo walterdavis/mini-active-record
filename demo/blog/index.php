@@ -5,6 +5,33 @@
  *
  * @author Walter Lee Davis
  */
+ 
+ /*
+ 
+ CREATE TABLE `comments` (
+   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+   `post_id` int(11) NOT NULL,
+   `name` varchar(255) NOT NULL DEFAULT '',
+   `email` varchar(255) NOT NULL DEFAULT '',
+   `url` varchar(255) DEFAULT NULL,
+   `message` text NOT NULL,
+   `created_at` datetime NOT NULL,
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
+ CREATE TABLE `posts` (
+   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+   `title` varchar(255) NOT NULL DEFAULT '',
+   `slug` varchar(255) NOT NULL DEFAULT '',
+   `teaser` text NOT NULL,
+   `body` text NOT NULL,
+   `created_at` datetime NOT NULL,
+   `updated_at` datetime NOT NULL,
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ 
+ */
+ 
 session_start();
 require_once('../../config.inc.php');
 require_once('models/post.php');
