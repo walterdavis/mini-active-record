@@ -7,8 +7,6 @@
  */
 session_start();
 require_once('../../config.inc.php');
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 require_once('models/post.php');
 require_once('models/comment.php');
 define('VIEW_ROOT', dirname(__FILE__) . '/views/');
