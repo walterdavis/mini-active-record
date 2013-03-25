@@ -125,8 +125,12 @@ function front_controller(){
   if(isset($_GET['action']) && in_array($_GET['action'], w('new create update show edit destroy index'))){
     $action = ($_GET['action'] == 'new') ? 'create' : $_GET['action'];
     $controller_name = Inflector::pluralize(Inflector::classify($_GET['controller'])) . 'Controller';
-    $controller = new $controller_name();
-    $out = $controller->$action();
+    if(method_exists($controller_name, $action)){
+      $controller = new $controller_name();
+      $out = $controller->$action();
+    }else{
+      header("HTTP/1.0 404 Not Found");
+    }
   }else{
     // show the blog index
     $controller = new PostsController();
@@ -136,7 +140,7 @@ function front_controller(){
 }
 // these global variables get overwritten by the various views
 $headline = $page_title = 'Demo Blog';
-// build the body of the page
+// build the body of the page, set the headline and page title
 $out = front_controller();
 // put it in the main template
 include(VIEW_ROOT . 'layout.php');
