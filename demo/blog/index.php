@@ -104,7 +104,7 @@ function url_for($object, $action){
  *
  * @param string $view_path path to the template
  * @param object $object 
- * @param array $collection (optional)
+ * @param array $collection of objects (optional)
  * @return string rendered HTML
  * @author Walter Lee Davis
  */
