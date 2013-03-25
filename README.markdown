@@ -95,10 +95,10 @@ The `save()` function calls a set of callbacks as it executes. These are:
 1. `before_validation()` A user-defined function that can optionally modify the object, and must return something truthy.
 2. `validate()` A hook that runs all defined validations on the object, and returns true or false (false will stop the save at this point).
 3. `after_validation()` A user-defined function that can optionally modify the object (but should leave it in a valid state to avoid future unpleasantness with the database).
-4. `before_save()` A last user-defined function before the actual save back to the database.
-5. `save_without_callbacks()` Persists the object to the database.
+4. `before_save()` (or `before_create()` if the object is new) A last user-defined function before the actual save back to the database. This function runs after the validations, and it can halt the save process.
+5. `save_without_callbacks()` Persists the object to the database. Only does so if the object is marked as `_dirty` (having unsaved changes).
 6. `update_associations()` Automatically persist all associated records.
-7. `after_save()` A user-defined function that runs after the save.
+7. `after_save()` (or `after_create()` if the object is new) A user-defined function that runs after the save. Must mark the object as `_dirty` to update any changed values.
 
 ##Example:
 
