@@ -1,7 +1,7 @@
 <?php
 $GLOBALS['page_title'] = $GLOBALS['headline'] = 'New Comment';
 ?>
-<form action="?action=create&amp;model=comments" method="post" accept-charset="utf-8">
+<form action="?action=create&amp;controller=comments" method="post" accept-charset="utf-8">
   <?php if(isset($params['flash'])) print $params['flash']; ?>
   <p>
     <label for="comments_name">Name</label>

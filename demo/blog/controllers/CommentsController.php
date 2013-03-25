@@ -1,7 +1,7 @@
 <?php
 class CommentsController extends MiniController{
   public function create(){
-    if(is_array($this->params['comments'])){
+    if(isset($this->params['comments']) && is_array($this->params['comments'])){
       $object = $this->model->build($this->params['comments']);
       if($object->save()){
         $_SESSION['flash'] = format_flash('Created comment');

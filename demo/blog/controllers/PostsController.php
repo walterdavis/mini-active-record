@@ -1,7 +1,7 @@
 <?php
 class PostsController extends MiniController{
   public function create(){
-    if(is_array($this->params['posts'])){
+    if(isset($this->params['posts']) && is_array($this->params['posts'])){
       $object = $this->model->build($this->params['posts']);
       if($object->save()){
         $_SESSION['flash'] = format_flash('Created post');

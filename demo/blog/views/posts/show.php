@@ -11,7 +11,7 @@ $GLOBALS['page_title'] = $GLOBALS['headline'] = h($object->title);
   <li><span class="commenter"><?= (!empty($comment->url)) ? '<a href="' . $comment->url . '">' . h($comment->name) . '</a>' : h($comment->name) ?></span><?= h($comment->message) ?><span class="metadata"><?= $comment->created_at ?></span></li>  
   <?php } ?>
 </ul>
-<form action="?model=comments&amp;action=create" method="post" accept-charset="utf-8">
+<form action="?controller=comments&amp;action=create" method="post" accept-charset="utf-8">
   <fieldset>
     <p>
       <label for="comments_name">Name</label><input type="text" name="comments[name]" value="" id="comments_name"/>

@@ -1,7 +1,7 @@
 <?php
 $GLOBALS['page_title'] = $GLOBALS['headline'] = 'Edit Post';
 ?>
-<form action="?action=update&amp;model=posts" method="post" accept-charset="utf-8">
+<form action="?action=update&amp;controller=posts" method="post" accept-charset="utf-8">
   <?php if(isset($params['flash'])) print $params['flash']; ?>
   <p>
     <input type="hidden" name="posts[id]" value="<?= $params['id'] ?>" />

@@ -1,7 +1,7 @@
 <?php
 $GLOBALS['page_title'] = $GLOBALS['headline'] = 'New Post';
 ?>
-<form action="?action=create&amp;model=posts" method="post" accept-charset="utf-8">
+<form action="?action=create&amp;controller=posts" method="post" accept-charset="utf-8">
   <?php if(isset($params['flash'])) print $params['flash']; ?>
   <p>
     <label for="posts_title">Name</label>

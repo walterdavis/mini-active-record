@@ -1,7 +1,7 @@
 <?php
 $GLOBALS['page_title'] = $GLOBALS['headline'] = 'Edit Comment';
 ?>
-<form action="?action=update&amp;model=comments" method="post" accept-charset="utf-8">
+<form action="?action=update&amp;controller=comments" method="post" accept-charset="utf-8">
   <?php if(isset($params['flash'])) print $params['flash']; ?>
   <p>
     <input type="hidden" name="comments[id]" value="<?= h($params['id']) ?>" id="comments_id"/>
