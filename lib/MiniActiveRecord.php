@@ -530,8 +530,8 @@ class MiniActiveRecord{
     $this->update_timestamps();
     $this->save_without_callbacks();
     $this->update_associations();
-    $this->after_save();
     $this->_dirty = false;
+    $this->after_save();
     return $this;
   }
   
@@ -965,22 +965,27 @@ class MiniActiveRecord{
   //callbacks -- extend in your subclass
   //these are called automatically in save and destroy
   public function before_save(){
-    return true;
+    return $this;
   }
   public function before_create(){
-    return true;
+    return $this;
   }
   public function after_save(){
-    return true;
+    $this->save_without_callbacks();
+    return $this;
+  }
+  public function after_create(){
+    $this->save_without_callbacks();
+    return $this;
   }
   public function before_validation(){
-    return true;
+    return $this;
   }
   public function after_validation(){
-    return true;
+    return $this;
   }
   public function before_destroy(){
-    return true;
+    return $this;
   }
 }
 

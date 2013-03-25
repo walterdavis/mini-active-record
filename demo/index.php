@@ -44,8 +44,8 @@ if(isset($_POST['commit'])){
   // errors will either be false or an array
   if($errors){
     // pretty-print the errors and fall through
-    $errors = '<ul><li>' . implode('</li><li>', (array)$errors) . '</li></ul>';
     $flash_class = ' error';
+    $errors = '<ul class="flash' . $flash_class . '"><li>' . implode('</li><li>', (array)$errors) . '</li></ul>';
   }else{
     // redirect
     header('Location: index.php');
@@ -74,7 +74,7 @@ $messages = $message->find_all(a('order: created_at DESC'));
       }
       ?>
     </ul>
-    <div class="flash<?= $flash_class ?>">
+    <div>
       <?= $errors ?>
     </div>
     <form action="index.php" method="post" accept-charset="utf-8">

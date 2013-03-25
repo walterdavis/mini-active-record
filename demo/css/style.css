@@ -60,8 +60,13 @@ label {
   font-size: smaller;
 }
 
+.flash {
+  padding: 1em 3em;
+  border: 1px solid #2D9932;
+  background-color: #CBF4B9;
+}
+
 .flash.error {
-  padding: 0 1em;
   border: 1px solid #993A2A;
   background-color: #F4BFB3;
 }

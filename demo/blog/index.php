@@ -37,11 +37,11 @@ require_once('../../config.inc.php');
 require_once('models/post.php');
 require_once('models/comment.php');
 define('VIEW_ROOT', dirname(__FILE__) . '/views/');
-function format_flash($errors){
-  // pretty-print the errors and fall through
+function format_flash($errors, $class = null){
+  if(!empty($class)) $class = ' ' . $class;
   $error_string = '';
   if(false !== $errors)
-    $error_string = "<ul>\n\t<li>" . implode("</li>\n\t<li>", (array)$errors) . "</li>\n</ul>\n";
+    $error_string = "<ul class=\"flash$class\">\n\t<li>" . implode("</li>\n\t<li>", (array)$errors) . "</li>\n</ul>\n";
   return $error_string;
 }
 
@@ -113,7 +113,7 @@ function create($model, $params = null){
       redirect_to(url_for($object, 'show'));
     }else{
       $model = $object;
-      $model->flash = format_flash($object->get_errors());
+      $model->flash = format_flash($object->get_errors(), 'error');
     }
   }
   return render($model->_table . '/create', $model);
@@ -126,7 +126,7 @@ function update($model, $params=array()){
       $_SESSION['flash'] = format_flash('Updated ' . Inflector::singularize($model->_table));
       redirect_to(url_for($object, 'show'));
     }else{
-      $object->flash = format_flash($object->get_errors());
+      $object->flash = format_flash($object->get_errors(), 'error');
       return render($model->_table . '/edit', $object);
     }
   }
