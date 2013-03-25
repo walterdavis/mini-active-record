@@ -33,29 +33,81 @@
  */
  
 session_start();
+
 require_once('../../config.inc.php');
 require_once('models/post.php');
 require_once('models/comment.php');
+require_once('../../lib/MiniController.php');
+require_once('controllers/PostsController.php');
+require_once('controllers/CommentsController.php');
+
+// path to the views
 define('VIEW_ROOT', dirname(__FILE__) . '/views/');
-function format_flash($errors, $class = null){
-  if(!empty($class)) $class = ' ' . $class;
+
+/**
+ * get and reset the session flash
+ *
+ * @param object $object to assign the flash to
+ * @return void
+ * @author Walter Lee Davis
+ */
+function get_flash($object){
+  if(isset($_SESSION['flash'])){
+    $object->flash = $_SESSION['flash'];
+    unset($_SESSION['flash']);
+  }
+}
+
+/**
+ * make an unordered list out of an array of errors
+ *
+ * @param array $errors
+ * @param string $classname (optional)
+ * @author Walter Lee Davis
+ */
+function format_flash($errors, $classname = null){
+  if(!empty($classname)) $classname = ' ' . $classname;
   $error_string = '';
   if(false !== $errors)
-    $error_string = "<ul class=\"flash$class\">\n\t<li>" . implode("</li>\n\t<li>", (array)$errors) . "</li>\n</ul>\n";
+    $error_string = "<ul class=\"flash$classname\">\n\t<li>" . implode("</li>\n\t<li>", (array)$errors) . "</li>\n</ul>\n";
   return $error_string;
 }
 
+/**
+ * helper for redirects
+ *
+ * @param string $url 
+ * @return void
+ * @author Walter Lee Davis
+ */
 function redirect_to($url){
   header('Location: ' . $url);
   exit;
 }
 
-function url_for($model, $action){
-  $url = 'index.php?action=' . $action . '&model=' . $model->_table;
-  if($model->id > 0) $url .= '&id=' . $model->id;
+/**
+ * build a querystring URL for this simple router
+ *
+ * @param object $object to link to
+ * @param string $action method to call
+ * @return string URL
+ * @author Walter Lee Davis
+ */
+function url_for($object, $action){
+  $url = 'index.php?action=' . $action . '&controller=' . $object->_table;
+  if($object->id > 0) $url .= '&id=' . $object->id;
   return $url;
 }
 
+/**
+ * render a template with an object
+ *
+ * @param string $view_path path to the template
+ * @param object $object 
+ * @param array $collection (optional)
+ * @return string rendered HTML
+ * @author Walter Lee Davis
+ */
 function render($view_path, $object, $collection = null){
   ob_start();
   $params = get_object_vars($object);
@@ -63,108 +115,30 @@ function render($view_path, $object, $collection = null){
   return ob_get_clean();
 }
 
-function get_flash($model){
-  if(isset($_SESSION['flash'])){
-    $model->flash = $_SESSION['flash'];
-    unset($_SESSION['flash']);
-  }
-}
-
+/**
+ * this is a rock-simple router/view combination
+ *
+ * @return string HTML for the template
+ * @author Walter Lee Davis
+ */
 function front_controller(){
-  if(isset($_GET['action']) && (function_exists($_GET['action']) || $_GET['action'] == 'new') && isset($_GET['model'])){
-    $model = Inflector::classify($_GET['model']);
-    if(isset($_GET['action']) && $_GET['action'] == 'update' && isset($_POST[$_GET['model']]['id'])){
-      $out = update(new $model(), $_POST[$_GET['model']]);
-    }
-    if(isset($_GET['action']) && $_GET['action'] == 'create'){
-      $out = create(new $model(), $_POST[$_GET['model']]);
-    }
-    if(isset($_GET['action']) && $_GET['action'] == 'new'){
-      $out = create(new $model());
-    }
-    if(isset($_GET['action']) && $_GET['action'] == 'edit'){
-      $out = edit(new $model(), $_GET);
-    }
-    if(isset($_GET['action']) && $_GET['action'] == 'update'){
-      $out = update(new $model(), $_POST);
-    }
-    if(isset($_GET['action']) && $_GET['action'] == 'show'){
-      $out = show(new $model(), $_GET);
-    }
-    if(isset($_POST['action']) && $_POST['action'] == 'destroy'){
-      destroy(new $model(), $_POST);
-    }
+  if(isset($_GET['action']) && in_array($_GET['action'], w('new create update show edit destroy index'))){
+    $action = ($_GET['action'] == 'new') ? 'create' : $_GET['action'];
+    $controller_name = Inflector::pluralize(Inflector::classify($_GET['controller'])) . 'Controller';
+    $controller = new $controller_name();
+    $out = $controller->$action();
   }else{
     // show the blog index
-    $out = index(new Post());
+    $controller = new PostsController();
+    $out = $controller->index();
   }
   return $out;
 }
-
-function create($model, $params = null){
-  if(is_array($params)){
-    $object = $model->build($params);
-    if($object->save()){
-      $_SESSION['flash'] = format_flash('Created ' . Inflector::singularize($model->_table));
-      //a tiny hack for comments' sake
-      if(is_object($object->post)){
-        redirect_to(url_for($object->post, 'show'));
-      }
-      redirect_to(url_for($object, 'show'));
-    }else{
-      $model = $object;
-      $model->flash = format_flash($object->get_errors(), 'error');
-    }
-  }
-  return render($model->_table . '/create', $model);
-}
-
-function update($model, $params=array()){
-  if($object = $model->find($params['id'])){
-    $object->populate($params);
-    if($object->save()){
-      $_SESSION['flash'] = format_flash('Updated ' . Inflector::singularize($model->_table));
-      redirect_to(url_for($object, 'show'));
-    }else{
-      $object->flash = format_flash($object->get_errors(), 'error');
-      return render($model->_table . '/edit', $object);
-    }
-  }
-}
-
-function destroy($model, $params=array()){
-  if($object = $model->find($params['id'])){
-    if($object->destroy()){
-      $_SESSION['flash'] = format_flash('Deleted ' . Inflector::singularize($model->_table));
-      redirect_to('index.php');
-    }else{
-      $_SESSION['flash'] = $object->get_errors();
-      redirect_to(url_for($object, 'show'));
-    }
-  }
-}
-
-function edit($model, $params=array()){
-  if($object = $model->find($params['id'])){
-    return render($model->_table . '/edit', $object);
-  }
-}
-
-function show($model, $params=array()){
-  if($object = $model->find($params['id'])){
-    get_flash($object);
-    return render($model->_table . '/show', $object);
-  }
-}
-
-function index($model){
-  $objects = $model->find_all(a('order:created_at DESC'));
-  get_flash($model);
-  return render($model->_table . '/index', $model, $objects);
-}
+// these global variables get overwritten by the various views
 $headline = $page_title = 'Demo Blog';
+// build the body of the page
 $out = front_controller();
-
+// put it in the main template
 include(VIEW_ROOT . 'layout.php');
 
 ?>
