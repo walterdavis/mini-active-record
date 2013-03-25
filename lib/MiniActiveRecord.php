@@ -532,6 +532,7 @@ class MiniActiveRecord{
     $this->update_associations();
     $this->_dirty = false;
     $this->after_save();
+    $this->after_create();
     return $this;
   }
   
@@ -740,6 +741,7 @@ class MiniActiveRecord{
    * @author Walter Lee Davis
    */
   function update_attributes($pairs){
+    $this->_dirty = true;
     foreach($pairs as $key => $val){
       $this->$key = $val;
     }
@@ -971,11 +973,13 @@ class MiniActiveRecord{
     return $this;
   }
   public function after_save(){
-    $this->save_without_callbacks();
+    if($this->_dirty)
+      $this->save_without_callbacks();
     return $this;
   }
   public function after_create(){
-    $this->save_without_callbacks();
+    if($this->_dirty)
+      $this->save_without_callbacks();
     return $this;
   }
   public function before_validation(){
