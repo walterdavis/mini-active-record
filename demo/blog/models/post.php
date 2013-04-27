@@ -8,5 +8,8 @@ class Post extends MiniActiveRecord{
     $this->slug = $this->id . '-' . preg_replace('/\s+/', '-', strtolower(preg_replace('/[^a-z0-9]+/i',' ', $this->title)));
     return parent::after_save();
   }
+  public function comments_count(){
+    return count($this->comments);
+  }
 }
 ?>
