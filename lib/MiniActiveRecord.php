@@ -16,19 +16,21 @@ if(!defined('DB_CHARSET')){
  * @author Walter Lee Davis
  */
 class MiniActiveRecord{
-  public $has_many = '';
-  public $has_many_through = '';
-  public $belongs_to = '';
-  public $has_and_belongs_to_many = '';
-  public $validations = '';
-  public $_dirty = true;
-  private static $_cache = array();
+  public $has_many                 = '';
+  public $has_many_through         = '';
+  public $belongs_to               = '';
+  public $has_and_belongs_to_many  = '';
+  public $validations              = '';
+  public $attr_accessible          = '';
+  public $_dirty                   = true;
+  private static $_cache           = array();
   private static $_db;
   public static $_table;
   private static $_class;
   private static $_columns;
   private static $_column_names;
-  private static $_validations = array();
+  private static $_validations     = array();
+  private static $_attr_accessible = array();
   private $_errors;
   
   /**
@@ -55,6 +57,7 @@ class MiniActiveRecord{
       if(empty($this->_columns)) $this->_columns = $this->columns();
       if(empty($this->_column_names)) $this->_column_names = array_keys($this->columns());
       if(empty($this->_validations)) $this->_validations = $this->validations();
+      if(empty($this->_attr_accessible)) $this->_attr_accessible = array_intersect($this->_column_names, w($this->attr_accessible));
       foreach($this->_columns as $key => $col){
         $this->$key = $col['Default'];
       }
@@ -157,7 +160,7 @@ class MiniActiveRecord{
    */
   public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
-      if($key != 'id' || $include_id) $this->$key = $val;
+      if(in_array($key, $this->_attr_accessible) || ($key == 'id' && $include_id)) $this->$key = $val;
     }
     return $this;
   }
@@ -521,12 +524,13 @@ class MiniActiveRecord{
     $this->before_validation();
     $this->validate();
     $this->after_validation();
-    if($this->get_errors()) return;
+    if($this->get_errors()) return false;
     if($this->persisted()){
-      if(false === $this->before_save()) return;
+      $this->before_save();
     }else{
-      if(false === $this->before_create()) return;
+      $this->before_create();
     }
+    if($this->get_errors()) return false;
     $this->update_timestamps();
     $this->save_without_callbacks();
     $this->update_associations();
@@ -845,7 +849,7 @@ class MiniActiveRecord{
       $options['values'] = $arguments;
       return $this->find_all($options);
     }
-    if(substr($name, 0, 18) == 'find_or_create_by_'){
+    if(substr($name, 0, 18) == 'find_or_create_by_' || substr($name, 0, 19) == 'first_or_create_by_'){
       $keys = preg_split('/_and_/', substr($name, 18), -1, PREG_SPLIT_NO_EMPTY);
       $where = $options = $params = array();
       foreach($keys as $key){
@@ -967,29 +971,18 @@ class MiniActiveRecord{
   //callbacks -- extend in your subclass
   //these are called automatically in save and destroy
   public function before_save(){
-    return $this;
   }
   public function before_create(){
-    return $this;
   }
   public function after_save(){
-    if($this->_dirty)
-      $this->save_without_callbacks();
-    return $this;
   }
   public function after_create(){
-    if($this->_dirty)
-      $this->save_without_callbacks();
-    return $this;
   }
   public function before_validation(){
-    return $this;
   }
   public function after_validation(){
-    return $this;
   }
   public function before_destroy(){
-    return $this;
   }
 }
 

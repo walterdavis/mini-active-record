@@ -98,7 +98,7 @@ The `save()` function calls a set of callbacks as it executes. These are:
 4. `before_save()` (or `before_create()` if the object is new) A last user-defined function before the actual save back to the database. This function runs after the validations, and it can halt the save process.
 5. `save_without_callbacks()` Persists the object to the database. Only does so if the object is marked as `_dirty` (having unsaved changes).
 6. `update_associations()` Automatically persist all associated records.
-7. `after_save()` (or `after_create()` if the object is new) A user-defined function that runs after the save. Must mark the object as `_dirty` to update any changed values.
+7. `after_save()` (or `after_create()` if the object is new) A user-defined function that runs after the save. Must implement `save_without_callbacks()` to update any changed values.
 
 ##Example:
 
