@@ -21,7 +21,6 @@ class MiniActiveRecord{
   public $belongs_to               = '';
   public $has_and_belongs_to_many  = '';
   public $validations              = '';
-  public $attr_accessible          = '';
   public $_dirty                   = true;
   private static $_cache           = array();
   private static $_db;
@@ -30,7 +29,6 @@ class MiniActiveRecord{
   private static $_columns;
   private static $_column_names;
   private static $_validations     = array();
-  private static $_attr_accessible = array();
   private $_errors;
   
   /**
@@ -57,7 +55,6 @@ class MiniActiveRecord{
       if(empty($this->_columns)) $this->_columns = $this->columns();
       if(empty($this->_column_names)) $this->_column_names = array_keys($this->columns());
       if(empty($this->_validations)) $this->_validations = $this->validations();
-      if(empty($this->_attr_accessible)) $this->_attr_accessible = array_intersect($this->_column_names, w($this->attr_accessible));
       foreach($this->_columns as $key => $col){
         $this->$key = $col['Default'];
       }
@@ -160,7 +157,7 @@ class MiniActiveRecord{
    */
   public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
-      if(in_array($key, $this->_attr_accessible) || ($key == 'id' && $include_id)) $this->$key = $val;
+      if($key != 'id' || $include_id) $this->$key = $val;
     }
     return $this;
   }
@@ -385,15 +382,9 @@ class MiniActiveRecord{
    */
   function find_all($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => MAR_LIMIT, 'offset' => 0), $options);
-    $where = $limit = '';
-    $sti = (in_array('type', $this->_column_names)) ? ' AND `type` = "' . $this->_class . '"' : '';
-    $where = (!empty($options['where'])) ? ' WHERE 1 AND ' . $options['where'] : ' WHERE 1';
-    if($options['limit'] + $options['offset'] > 0){
-      $limit = ' LIMIT ' . $options['limit'] . ' OFFSET ' . $options['offset'];
-    }
+    $this->get_query_params($options);
     $order = ' ORDER BY ' . $options['order'];
-    $values = isset($options['values']) ? $options['values'] : array();
-    return $this->find_by_sql('SELECT * FROM `' . $this->_table . '`' . $where . $sti . $order . $limit, $values);
+    return $this->find_by_sql('SELECT * FROM `' . $this->_table . '`' . $this->_where . $this->_sti . $order . $this->_limit, $this->_values);
   }
   
   /**
@@ -405,19 +396,23 @@ class MiniActiveRecord{
    */
   function count($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => MAR_LIMIT, 'offset' => 0), $options);
-    $where = $limit = '';
-    $sti = (in_array('type', $this->_column_names)) ? ' AND `type` = "' . $this->_class . '"' : '';
-    $where = (!empty($options['where'])) ? ' WHERE 1 AND ' . $options['where'] : ' WHERE 1';
-    if($options['limit'] + $options['offset'] > 0){
-      $limit = ' LIMIT ' . $options['limit'] . ' OFFSET ' . $options['offset'];
-    }
-    $values = isset($options['values']) ? $options['values'] : array();
-    $result = $this->query('SELECT COUNT(*) AS _count FROM `' . $this->_table . '`' . $where . $sti . $limit, $values);
+    $this->get_query_params($options);
+    $result = $this->query('SELECT COUNT(*) AS _count FROM `' . $this->_table . '`' . $this->_where . $this->_sti . $this->_limit, $this->_values);
     if(!!$result){
       if($row = $result->fetch(PDO::FETCH_ASSOC))
         return $row['_count'];
     }
     return 0;
+  }
+  
+  function get_query_params($options = array()){
+    $this->_where = $this->_limit = '';
+    $this->_sti = (in_array('type', $this->_column_names)) ? ' AND `type` = "' . $this->_class . '"' : '';
+    $this->_where = (!empty($options['where'])) ? ' WHERE 1 AND ' . $options['where'] : ' WHERE 1';
+    if($options['limit'] + $options['offset'] > 0){
+      $this->_limit = ' LIMIT ' . $options['limit'] . ' OFFSET ' . $options['offset'];
+    }
+    $this->_values = isset($options['values']) ? $options['values'] : array();
   }
 
   /**
