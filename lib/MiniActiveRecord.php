@@ -21,7 +21,7 @@ class MiniActiveRecord{
   public $belongs_to               = '';
   public $has_and_belongs_to_many  = '';
   public $validations              = '';
-  public $_dirty                   = true;
+  public $attr_accessible          = '';
   private static $_cache           = array();
   private static $_db;
   public static $_table;
@@ -30,6 +30,7 @@ class MiniActiveRecord{
   private static $_column_names;
   private static $_validations     = array();
   private $_errors;
+  private $_original               = array();
   
   /**
    * Auto-construct a new MAR object
@@ -55,6 +56,7 @@ class MiniActiveRecord{
       if(empty($this->_columns)) $this->_columns = $this->columns();
       if(empty($this->_column_names)) $this->_column_names = array_keys($this->columns());
       if(empty($this->_validations)) $this->_validations = $this->validations();
+      if(!is_array($this->attr_accessible)) $this->attr_accessible = w($this->attr_accessible);
       foreach($this->_columns as $key => $col){
         $this->$key = $col['Default'];
       }
@@ -157,10 +159,27 @@ class MiniActiveRecord{
    */
   public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
+      if(!in_array($key, $this->attr_accessible)){
+        $this->add_validation($key, 'mass_assignment');
+      }
       if($key != 'id' || $include_id) $this->$key = $val;
     }
     return $this;
   }
+  /**
+   * load an object from an array
+   *
+   * @param array $params 
+   * @return object $this
+   * @author Walter Lee Davis
+   */
+  private function load($params = array()){
+    foreach($params as $key => $val){
+      $this->$key = $val;
+    }
+    return $this;
+  }
+  
   
   /**
    * gets a nested array of all children of this object
@@ -433,8 +452,9 @@ class MiniActiveRecord{
         return self::$_cache[$fingerprint];
       }
       while($row = $result->fetch(PDO::FETCH_ASSOC)){
-        $records[$row['id']] = $this->build($row);
-        $records[$row['id']]->_dirty = false;;
+        $records[$row['id']] = $this->build();
+        $records[$row['id']]->load($row);
+        $records[$row['id']]->_original = $records[$row['id']]->hash_values();
       }
     }
     return self::$_cache[$fingerprint] = $records;
@@ -466,10 +486,9 @@ class MiniActiveRecord{
    */
   function build($options = array()){
     $obj = new $this->_class($options);
-    $obj->_dirty = true;
     return $obj;
   }
-  
+    
   /**
    * build and save an object and return it
    *
@@ -529,7 +548,7 @@ class MiniActiveRecord{
     $this->update_timestamps();
     $this->save_without_callbacks();
     $this->update_associations();
-    $this->_dirty = false;
+    $this->_original = $this->hash_values();
     $this->after_save();
     $this->after_create();
     return $this;
@@ -550,6 +569,31 @@ class MiniActiveRecord{
   }
   
   /**
+   * checks if an object has changed since it was loaded from the DB
+   *
+   * @return boolean
+   * @author Walter Lee Davis
+   */
+  
+  function dirty(){
+    return $this->_original == $this->hash_values();
+  }
+  
+  /**
+   * checks an individual column for changes since it was loaded
+   *
+   * @param string $field 
+   * @return boolean
+   * @author Walter Lee Davis
+   */
+  function changed($field){
+    if(isset($this->_original[$field]) && isset($this->$field)){
+      return ($this->_original[$field] != md5($this->$field));
+    }
+    return true;
+  }
+  
+  /**
    * run all registered validations
    *
    * @return void
@@ -557,7 +601,7 @@ class MiniActiveRecord{
    */
   function validate(){
     $this->_errors = null;
-    foreach( $this->_validations as $v){
+    foreach( $this->_validations as $v ){
       call_user_func_array('self::validate_' . array_shift($v), $v);
     }
     if($this->get_errors()){
@@ -579,6 +623,24 @@ class MiniActiveRecord{
       $message = Inflector::humanize($key) . ' cannot be empty';
     }
     if(!isset($this->$key) || empty($this->$key)){
+      $this->add_error($key, $message);
+      return false;
+    }
+    return true;
+  }
+  /**
+   * tests for changes in a protected column in the object
+   *
+   * @param string $key column
+   * @param string $message optional
+   * @return boolean
+   * @author Walter Lee Davis
+   */
+  private function validate_mass_assignment($key, $message = null){
+    if(!$message){
+      $message = Inflector::humanize($key) . ' cannot be changed';
+    }
+    if(isset($this->$key) && $this->changed($key)){
       $this->add_error($key, $message);
       return false;
     }
@@ -658,6 +720,26 @@ class MiniActiveRecord{
     $this->_errors[$field] = $error;
   }
   
+/**
+ * add a validation to a model if it doesn't exist
+ *
+ * @param string $field 
+ * @param string $validation validation name
+ * @return void
+ * @author Walter Lee Davis
+ */
+  private function add_validation($field, $validation){
+    $has_validation = false;
+    foreach($this->_validations as $key => $val){
+      if(isset($val[1]) && ($val[1] == $field) && isset($val[0]) && ($val[0] == $validation)){
+        $has_validation = true;
+      }
+    }
+    if(!$has_validation){
+      $this->_validations[] = array($validation, $field);
+    }
+  }
+  
   /**
    * find relationship between this object and another
    *
@@ -693,7 +775,7 @@ class MiniActiveRecord{
             $sql = 'DELETE FROM ' . $this->link_table($obj) . ' WHERE ' . $this->foreign_key() . ' = ' . intval($this->id);
             $this->query($sql);
             foreach($related as $k => $o){
-              if($o->_dirty){
+              if($o->dirty()){
                 $related[$k] = $o->save();
               }else{
                 $sql = 'INSERT INTO ' . $this->link_table($obj) . ' (' . $this->foreign_key() . ', ' . $obj->foreign_key() . ') VALUES (' . intval($this->id) . ', ' . intval($o->id) . ')';
@@ -703,12 +785,12 @@ class MiniActiveRecord{
             break;
           case 'has_many_through':
             foreach($this->$relation as $r){
-              if($r->_dirty) $r->save();
+              if($r->dirty()) $r->save();
             }
             break;
           case 'has_many':
             foreach($this->$relation as $r){
-              if($r->_dirty) $r->save();
+              if($r->dirty()) $r->save();
             }
             $ids = Inflector::singularize($relation) . '_ids';
             $sql = 'UPDATE `' . $relation . '` SET ' . $this->foreign_key() . ' = NULL WHERE ' . $this->foreign_key() . ' = ' . intval($this->id);
@@ -718,8 +800,8 @@ class MiniActiveRecord{
             break;
           case 'belongs_to':
             $key = $obj->foreign_key();
-            if($obj->_dirty) $obj->save();
-            if($this->_dirty || $this->$key != $obj->id){
+            if($obj->dirty()) $obj->save();
+            if($this->dirty() || $this->$key != $obj->id){
               $this->$key = $obj->id;
               $this->update_timestmaps();
               $this->save_without_callbacks();
@@ -740,7 +822,6 @@ class MiniActiveRecord{
    * @author Walter Lee Davis
    */
   function update_attributes($pairs){
-    $this->_dirty = true;
     foreach($pairs as $key => $val){
       $this->$key = $val;
     }
@@ -963,6 +1044,15 @@ class MiniActiveRecord{
     }
   }
   
+  function hash_values(){
+    $out = array();
+    foreach($this->_column_names as $c){
+      $out[$c] = md5($this->$c);
+    }
+    return $out;
+  }
+  
+    
   //callbacks -- extend in your subclass
   //these are called automatically in save and destroy
   public function before_save(){
