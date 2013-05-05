@@ -101,3 +101,15 @@ fieldset input, fieldset textarea {
 fieldset input[type="submit"] {
   width: auto;
 }
+
+section h1 {
+  font-size: 2em;
+}
+
+pre {
+  border: 1px solid #ccc;
+  padding: 1em 2em;
+  background-color: #eee;
+  color: #666;
+  overflow: auto;
+}
