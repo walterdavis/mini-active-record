@@ -19,6 +19,7 @@ require_once('../config.inc.php');
 class Message extends MiniActiveRecord{
   // two different ways to call validate_presence: with and without a custom error message
   public $validations = 'presence:name; presence:body:Didn\'t you have anything to say?';
+  public $attr_accessible = 'name body';
 }
 
 // declare some variables for later

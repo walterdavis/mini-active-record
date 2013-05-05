@@ -39,6 +39,14 @@ Each object class in your application will be represented by a sub-class of Mini
 
 While working with these objects in your application, you simply assign values to their attributes, and when you're done, call `save()` on that object to persist them.
 
+Each model declares a list of "accessible" attributes, which are the only attributes you will accept changes to through mass assignment (as in a form POST). You declare these as a space-delimited list of column names in the base subclass, like this:
+
+    class Car extends MiniActiveRecord{
+      public $attr_accessible = 'color name style year';
+    }
+    
+Now, even if someone constructs their own form and sends it to your controller, changes will not be accepted on any other attribute in your model when the `update()` method executes.
+
 ##Relationships:
 
 MiniActiveRecord follows Rails' conventions when defining relationships between models. You declare these relationships in your models once, and then can use magic "getters" and "setters" to read and populate them. The following relationships are supported:
@@ -57,6 +65,7 @@ Each model has basic validations built into it, and you can extend your own mode
 * `validate_presence($attribute[, $error_message])` This tests for the presence (`isset()`) AND the non-emptiness of the attribute. The default message is "Attribute cannot be blank". If your object may have a value of `0`, you may need to write your own validator to test that value more explicitly.
 * `validate_regexp($attribute, $regexp[, $error_message])` This tests for a positive match between your attribute and the regexp provided. (You must include the delimiters in your regexp, no assumptions are made.) The default message is "Attribute is not valid".
 * `validate_email([$attribute, $error_message])` This is a combination of the two foregoing validations, combining a test for presence with a test for matching a simple e-mail regexp. If nothing is entered, the default message from `validate_presence` is used. If the regexp doesn't match, then the default message is "That didn't look like an e-mail address", which you can change by passing a different message to this function.
+* `validate_mass_assignment()` This only permits attributes that are listed in the `attr_accessible` string to be altered when the record is persisted. This validation is added automatically to your models when you use the `populate()` method to update their attributes. If you need to step around this, you may do so by using direct assignment in your controller method rather than using `populate()`.
 
 Validations are defined using the following DSL: 
 
@@ -96,7 +105,7 @@ The `save()` function calls a set of callbacks as it executes. These are:
 2. `validate()` A hook that runs all defined validations on the object, and returns true or false (false will stop the save at this point).
 3. `after_validation()` A user-defined function that can optionally modify the object (but should leave it in a valid state to avoid future unpleasantness with the database).
 4. `before_save()` (or `before_create()` if the object is new) A last user-defined function before the actual save back to the database. This function runs after the validations, and it can halt the save process.
-5. `save_without_callbacks()` Persists the object to the database. Only does so if the object is marked as `_dirty` (having unsaved changes).
+5. `save_without_callbacks()` Persists the object to the database. Only does so if the object has unsaved changes.
 6. `update_associations()` Automatically persist all associated records.
 7. `after_save()` (or `after_create()` if the object is new) A user-defined function that runs after the save. Must include a call to `save_without_callbacks()` to update any changed values.
 
@@ -118,6 +127,7 @@ The `save()` function calls a set of callbacks as it executes. These are:
     
     class Car extends MiniActiveRecord{
       public $validations = 'presence:model; regexp:year:/\d{4}/; presence:year';
+      public $attr_accessible = 'model year';
       public $has_and_belongs_to_many = 'drivers';
       function description(){
         return implode(' ', array($this->year, $this->color, $this->model));
@@ -125,6 +135,7 @@ The `save()` function calls a set of callbacks as it executes. These are:
     }
     class Driver extends MiniActiveRecord{
       public $validations = 'presence:name';
+      public $attr_accessible = 'name';
       public $has_and_belongs_to_many = 'cars';
     }
     //create some empty instances to work with
