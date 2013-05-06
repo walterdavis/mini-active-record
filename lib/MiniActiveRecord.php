@@ -2,6 +2,9 @@
 if(!defined('MAR_LIMIT')){
   define('MAR_LIMIT', 10000);
 }
+if(!defined('MAR_DEVELOPER_MODE')){
+  define('MAR_DEVELOPER_MODE', false);
+}
 if(!defined('MAR_CHARSET')){
   define('MAR_CHARSET', 'UTF-8');
 }
@@ -160,7 +163,7 @@ class MiniActiveRecord{
   public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
       if(!in_array($key, $this->attr_accessible)){
-        if(defined('MAR_DEVELOPER_MODE') && MAR_DEVELOPER_MODE == true){
+        if(MAR_DEVELOPER_MODE == true){
           $this->add_validation($key, 'mass_assignment');
         }else{
           unset($params[$key]);
