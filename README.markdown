@@ -84,7 +84,7 @@ Note that this DSL uses a semicolon- and colon-delimited string (like CSS). If y
 These validations are compiled at construction time, and called in order by the `validate()` callback. You may add your own callbacks following this pattern:
 
     class Foo extends MiniActiveRecord{
-      $validations = 'bar:wibble';
+      public $validations = 'bar:wibble';
       // $this->wibble must equal zero
       private function validate_bar($key, $message = 'Baz'){
         if(0 !== $key){
@@ -101,10 +101,10 @@ At any point, a record may be inspected for errors with the `get_errors()` funct
 
 The `save()` function calls a set of callbacks as it executes. These are:
 
-1. `before_validation()` A user-defined function that can optionally modify the object, and must return something truthy.
+1. `before_validation()` A user-defined function that can optionally modify the object.
 2. `validate()` A hook that runs all defined validations on the object, and returns true or false (false will stop the save at this point).
 3. `after_validation()` A user-defined function that can optionally modify the object (but should leave it in a valid state to avoid future unpleasantness with the database).
-4. `before_save()` (or `before_create()` if the object is new) A last user-defined function before the actual save back to the database. This function runs after the validations, and it can halt the save process.
+4. `before_save()` (or `before_create()` if the object is new) A last user-defined function before the actual save back to the database. The object is checked for errors after this hook has run, so it may stop the save at this point.
 5. `save_without_callbacks()` Persists the object to the database. Only does so if the object has unsaved changes.
 6. `update_associations()` Automatically persist all associated records.
 7. `after_save()` (or `after_create()` if the object is new) A user-defined function that runs after the save. Must include a call to `save_without_callbacks()` to update any changed values.
