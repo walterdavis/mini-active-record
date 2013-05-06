@@ -160,7 +160,12 @@ class MiniActiveRecord{
   public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
       if(!in_array($key, $this->attr_accessible)){
-        $this->add_validation($key, 'mass_assignment');
+        if(defined('MAR_DEVELOPER_MODE') && MAR_DEVELOPER_MODE == true){
+          $this->add_validation($key, 'mass_assignment');
+        }else{
+          unset($params[$key]);
+          continue;
+        }
       }
       if($key != 'id' || $include_id) $this->$key = $val;
     }
@@ -268,7 +273,7 @@ class MiniActiveRecord{
       }
       return $validations;
     }
-    return $this->validations();
+    return $this->validations;
   }
   
   /**
@@ -1111,3 +1116,12 @@ function pluck($key, $array_of_objects){
   return $out;
 }
 ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title></title>
+  </head>
+  <body>
+  </body>
+</html>
