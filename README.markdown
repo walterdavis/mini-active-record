@@ -35,7 +35,7 @@ It is developed with a zero-errors policy; no function calls are silenced and er
     
 ##Models
 
-Each object class in your application will be represented by a sub-class of MiniActiveRecord. This allows you to create a rich application with only a few lines of code. When a new instance of the class is created, a reflection of the database structure is used to pre-populate that instance with default values, and to set up the "setters" and "getters" needed to persist it. Much of this is done using metaprogramming in the `__call`, `__set`, and `__get` "magic" functions, as well as the `__construct` initializer.
+Each model in your application will be represented by a subclass of MiniActiveRecord. This allows you to create a rich application with only a few lines of code. When a new instance of the class is created, a reflection of the database structure is used to pre-populate that instance with default values, and to set up the "setters" and "getters" needed to persist it. Much of this is done using metaprogramming in the `__call`, `__set`, and `__get` "magic" functions, as well as the `__construct` initializer.
 
 While working with these objects in your application, you simply assign values to their attributes, and when you're done, call `save()` on that object to persist them.
 

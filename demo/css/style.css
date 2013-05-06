@@ -109,7 +109,19 @@ section h1 {
 pre {
   border: 1px solid #ccc;
   padding: 1em 2em;
-  background-color: #eee;
+  background-color: #efefef;
   color: #666;
   overflow: auto;
+}
+
+code {
+  color: #666;
+  white-space: pre;
+}
+
+blockquote {
+  padding: 0 1em;
+  border: 2px solid #D9D9D9;
+  margin: 1em 0;
+  background-color: #efefef;
 }

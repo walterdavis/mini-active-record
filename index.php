@@ -11,6 +11,8 @@ $out = file_get_contents('README.markdown');
   <!--[if IE]>
   <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+  <link rel="icon" href="favicon.ico" type="image/x-icon"/>
 </head>
 <body>
   <a href="https://github.com/walterdavis/mini-active-record">
