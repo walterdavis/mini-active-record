@@ -166,7 +166,7 @@ class MiniActiveRecord{
    */
   public function populate($params = array(), $include_id = false){
     foreach($params as $key => $val){
-      if(!in_array($key, $this->attr_accessible)){
+      if(count($this->attr_accessible) > 0 && !in_array($key, $this->attr_accessible)){
         if(MAR_DEVELOPER_MODE == true){
           $this->add_validation($key, 'mass_assignment');
         }else{

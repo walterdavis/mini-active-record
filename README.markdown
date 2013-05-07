@@ -4,7 +4,7 @@ MiniActiveRecord is the spiritual successor to MyActiveRecord, by Jake Grimley. 
 
 MiniActiveRecord requires PHP 5.1 or better, and has only been tested with 5.3. It uses PDO (PHP Data Objects) to interface with the database, so you must have compiled that module into PHP as well (it's on by default in 5.3). This means that you should be able to use databases other than just MySQL, although I have not tested this myself.
 
-It is developed with a zero-errors policy; no function calls are silenced and error reporting is on, set to kill (well, `E_ALL`). Naturally, you should disable this preference in production.
+It is developed with a zero-errors policy; no function calls are silenced with an `@`, and error reporting is on and set to `E_ALL` when `MAR_DEVELOPER_MODE` is set to `true`. Naturally, you should disable this preference in production.
 
 ##MIT License:
 
@@ -39,7 +39,7 @@ Each model in your application will be represented by a subclass of MiniActiveRe
 
 While working with these objects in your application, you simply assign values to their attributes, and when you're done, call `save()` on that object to persist them.
 
-Each model declares a list of "accessible" attributes, which are the only attributes you will accept changes to through mass assignment (as in a form POST). You declare these as a space-delimited list of column names in the base subclass, like this:
+Each model may declare a list of "accessible" attributes, which are the only attributes you will accept changes to through mass assignment (as in a form POST). You declare these as a space-delimited list of column names in the base subclass, like this:
 
     class Car extends MiniActiveRecord{
       public $attr_accessible = 'color name style year';
@@ -65,7 +65,7 @@ Each model has basic validations built into it, and you can extend your own mode
 * `validate_presence($attribute[, $error_message])` This tests for the presence (`isset()`) AND the non-emptiness of the attribute. The default message is "Attribute cannot be blank". If your object may have a value of `0`, you may need to write your own validator to test that value more explicitly.
 * `validate_regexp($attribute, $regexp[, $error_message])` This tests for a positive match between your attribute and the regexp provided. (You must include the delimiters in your regexp, no assumptions are made.) The default message is "Attribute is not valid".
 * `validate_email([$attribute, $error_message])` This is a combination of the two foregoing validations, combining a test for presence with a test for matching a simple e-mail regexp. If nothing is entered, the default message from `validate_presence` is used. If the regexp doesn't match, then the default message is "That didn't look like an e-mail address", which you can change by passing a different message to this function.
-* `validate_mass_assignment($attribute[, $error_message])` This only permits attributes that are listed in the `attr_accessible` string to be altered when the record is persisted. This validation is added automatically to your models when you use the `populate()` method to update their attributes. If you need to step around this, you may do so by using direct assignment in your controller method rather than using `populate()`. This validation is only added when `MAR_DEVELOPER_MODE` is set to true, otherwise the illegal attributes are silently removed from the parameters.
+* `validate_mass_assignment($attribute[, $error_message])` This only permits attributes that are listed in the `attr_accessible` string to be altered when the record is persisted. This validation is added automatically to your models when you use the `populate()` method to update their attributes. If you need to step around this, you may do so by using direct assignment in your controller method rather than using `populate()`, or you may simply omit the `$attr_accessible` variable from your model. This validation is only added when `MAR_DEVELOPER_MODE` is set to true, otherwise the illegal attributes are silently removed from the parameters.
 
 Validations are defined using the following DSL: 
 
@@ -112,10 +112,9 @@ The `save()` function calls a set of callbacks as it executes. These are:
 ##Example:
 
     <?php
-    ini_set('display_errors', 1);
-    error_reporting(E_ALL);
     define('MAR_DSN', 'mysql://username:password@hostname/database');
     define('MAR_LIMIT', 10000);
+    define('MAR_DEVELOPER_MODE', true);
     define('MAR_CHARSET', 'UTF-8');
     define('DB_CHARSET', 'utf8');
     date_default_timezone_set('UTC');
