@@ -1,4 +1,8 @@
 <?php
+if(defined('MAR_DEVELOPER_MODE') && MAR_DEVELOPER_MODE == true){
+  ini_set('display_errors', 1);
+  error_reporting(E_ALL);
+}
 if(!defined('MAR_LIMIT')){
   define('MAR_LIMIT', 10000);
 }
