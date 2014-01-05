@@ -1,13 +1,13 @@
 <?php
+if(!defined('MAR_DEVELOPER_MODE')){
+  define('MAR_DEVELOPER_MODE', false);
+}
 if(defined('MAR_DEVELOPER_MODE') && MAR_DEVELOPER_MODE == true){
   ini_set('display_errors', 1);
   error_reporting(E_ALL);
 }
 if(!defined('MAR_LIMIT')){
   define('MAR_LIMIT', 10000);
-}
-if(!defined('MAR_DEVELOPER_MODE')){
-  define('MAR_DEVELOPER_MODE', false);
 }
 if(!defined('MAR_CHARSET')){
   define('MAR_CHARSET', 'UTF-8');
@@ -373,7 +373,7 @@ class MiniActiveRecord{
    * @return int unix timestamp  
    */
   function time_stamp($db_date_stamp){
-   return strtotime($db_date_stamp,time());
+    return strtotime($db_date_stamp,time());
   }
   
   /**
@@ -1123,12 +1123,3 @@ function pluck($key, $array_of_objects){
   return $out;
 }
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <title></title>
-  </head>
-  <body>
-  </body>
-</html>
