@@ -456,7 +456,7 @@ class MiniActiveRecord{
    * @author Walter Lee Davis
    */
   function find_by_sql($sql, $values = array()){
-    $fingerprint = md5($sql);
+    $fingerprint = md5($sql . implode('|', $values));
     $records = array();
     $result = $this->query($sql, $values);
     if(!!$result){
