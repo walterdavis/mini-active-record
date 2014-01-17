@@ -614,7 +614,7 @@ class MiniActiveRecord{
   function validate(){
     $this->_errors = null;
     foreach( $this->_validations as $v ){
-      call_user_func_array('self::validate_' . array_shift($v), $v);
+      call_user_func_array(array($this, 'validate_' . array_shift($v)), $v);
     }
     if($this->get_errors()){
       return false;
