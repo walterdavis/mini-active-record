@@ -342,7 +342,7 @@ class MiniActiveRecord{
    * @return string  mysql format date string
    */
   private function db_date($time_stamp=null){
-   return date('Y-m-d', $time_stamp ? $time_stamp : mktime() );
+   return date('Y-m-d', $time_stamp ? $time_stamp : time() );
   }
   
   /**
@@ -352,7 +352,7 @@ class MiniActiveRecord{
    * @return string  mysql format datetime string
    */  
   private function db_datetime($time_stamp=null){
-   return date('Y-m-d H:i:s', $time_stamp ? $time_stamp:mktime() );
+   return date('Y-m-d H:i:s', $time_stamp ? $time_stamp : time() );
   }
   
   /**
