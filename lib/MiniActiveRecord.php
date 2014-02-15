@@ -401,7 +401,7 @@ class MiniActiveRecord{
   function find_first($options = array()){
     $options = array_merge(array('where' => null, 'order' => 'id ASC', 'limit' => 1, 'offset' => 0), $options, array('limit' => 1));
     $results = self::find_all($options);
-    if($obj = array_pop($results)) return $obj;//    if($obj = array_pop(self::find_all($options))) return $obj;
+    if($obj = array_pop($results)) return $obj;
     return false;
   }
   
