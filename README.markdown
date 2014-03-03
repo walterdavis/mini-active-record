@@ -27,7 +27,7 @@ It is developed with a zero-errors policy; no function calls are silenced with a
 ##Sugars:
 
 * If you include a column named `updated_at` or `created_at`, defined as a `DATETIME`, the proper thing will happen automagically!
-* To use Single Table Inheritance, add a column named `class` in the table containing the proper name of the subclass.
+* To use Single Table Inheritance, add a column named `type` in the table containing the proper name of the subclass.
 * Magic "getters": `$car->drivers` will return an array of **Driver** objects.
 * Magic "setters": `$bob->add_car($jetta)` will add the `$jetta` **Car** object to the `$bob->cars` array, and will also connect the `$bob` **Driver** object to the `$jetta->drivers` array.
 * Magic "finders": `$car->find_by_model_and_year('jetta', 2001)` or `$car->find_all_by_model('jetta')` do what you'd expect. There's also the `$car->find_or_create_by_name_and_year('Mini',2012)` goodness you didn't know you were looking for.
