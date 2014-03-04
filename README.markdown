@@ -42,9 +42,9 @@ While working with these objects in your application, you simply assign values t
 Each model may declare a list of "accessible" attributes, which are the only attributes you will accept changes to through mass assignment (as in a form POST). You declare these as a space-delimited list of column names in the base subclass, like this:
 
 ```php
-    class Car extends MiniActiveRecord{
-      public $attr_accessible = 'color name style year';
-    }
+class Car extends MiniActiveRecord{
+  public $attr_accessible = 'color name style year';
+}
 ```
 
 Now, even if someone constructs their own form and sends it to your controller, changes will not be accepted on any other attribute in your model when the `populate()` method executes.
@@ -72,35 +72,35 @@ Each model has basic validations built into it, and you can extend your own mode
 Validations are defined using the following DSL: 
 
 ```php
-    $validations = 'function:attribute:argument; function:attribute:argument[:argument]';
-    //for example:
-    $validations = 'presence:name; email:email; regexp:phone:/\(?\d{3}\)?[\-\s]\d{3}\-\d{4}/';
+$validations = 'function:attribute:argument; function:attribute:argument[:argument]';
+//for example:
+$validations = 'presence:name; email:email; regexp:phone:/\(?\d{3}\)?[\-\s]\d{3}\-\d{4}/';
 ```
 
 Note that this DSL uses a semicolon- and colon-delimited string (like CSS). If you have a need for these characters in your arguments, you may escape them with a single backslash. If you have more complex needs, you may also define the `$validations` array as a regular array, and it will not be parsed at all. 
 
 ```php
-    $validations = array(
-      array('presence', 'name', 'Hey! What\'s your name?'),
-      array('email', 'email'),
-      array('regexp', 'phone', '/\(?\d{3}\)?[\-\s]\d{3}\-\d{4}/', 'Need your phone number, bub')
-    );
+$validations = array(
+  array('presence', 'name', 'Hey! What\'s your name?'),
+  array('email', 'email'),
+  array('regexp', 'phone', '/\(?\d{3}\)?[\-\s]\d{3}\-\d{4}/', 'Need your phone number, bub')
+);
 ```
 
 These validations are compiled at construction time, and called in order by the `validate()` callback. You may add your own callbacks following this pattern:
 
 ```php
-    class Foo extends MiniActiveRecord{
-      public $validations = 'bar:wibble';
-      // $this->wibble must equal zero
-      private function validate_bar($key, $message = 'Baz'){
-        if(0 !== $key){
-          $this->add_error($key, $message);
-          return false;
-        }
-        return true;
-      }
+class Foo extends MiniActiveRecord{
+  public $validations = 'bar:wibble';
+  // $this->wibble must equal zero
+  private function validate_bar($key, $message = 'Baz'){
+    if(0 !== $key){
+      $this->add_error($key, $message);
+      return false;
     }
+    return true;
+  }
+}
 ```
 
 At any point, a record may be inspected for errors with the `get_errors()` function. The result will only be accurate if validations have been performed, so if you are calling it outside of the normal save loop, you should call `validate()` on your object first.
@@ -120,43 +120,43 @@ The `save()` function calls a set of callbacks as it executes. These are:
 ##Example:
 
 ```php
-    <?php
-    define('MAR_DSN', 'mysql://username:password@hostname/database');
-    define('MAR_LIMIT', 10000);
-    define('MAR_DEVELOPER_MODE', true);
-    define('MAR_CHARSET', 'UTF-8');
-    define('DB_CHARSET', 'utf8');
-    date_default_timezone_set('UTC');
-    //this is the inflector from CakePHP
-    require_once('lib/Inflector.php');
-    //you may also use this one instead
-    //require_once('lib/MiniInflector.php');
-    require_once('lib/MiniActiveRecord.php');
+<?php
+define('MAR_DSN', 'mysql://username:password@hostname/database');
+define('MAR_LIMIT', 10000);
+define('MAR_DEVELOPER_MODE', true);
+define('MAR_CHARSET', 'UTF-8');
+define('DB_CHARSET', 'utf8');
+date_default_timezone_set('UTC');
+//this is the inflector from CakePHP
+require_once('lib/Inflector.php');
+//you may also use this one instead
+//require_once('lib/MiniInflector.php');
+require_once('lib/MiniActiveRecord.php');
 
-    class Car extends MiniActiveRecord{
-      public $validations = 'presence:model; regexp:year:/\d{4}/; presence:year';
-      public $attr_accessible = 'model year';
-      public $has_and_belongs_to_many = 'drivers';
-      function description(){
-        return implode(' ', array($this->year, $this->color, $this->model));
-      }
-    }
-    class Driver extends MiniActiveRecord{
-      public $validations = 'presence:name';
-      public $attr_accessible = 'name';
-      public $has_and_belongs_to_many = 'cars';
-    }
-    //create some empty instances to work with
-    $car = new Car();
-    $driver = new Driver();
-    $mini = $car->build(a('model:Mini, year:2012, color:red'));
-    //#build creates the object in memory, but doesn't persist it
-    $mini->save();
-    $walt = $driver->create(a('name: Walter'));
-    //#create saves the object directly
-    $mini->add_driver($walt);
-    //$mini->drivers is now an array containing $walt
-    $mini->save();
-    //this relationship is saved to the database
-    ?>
+class Car extends MiniActiveRecord{
+  public $validations = 'presence:model; regexp:year:/\d{4}/; presence:year';
+  public $attr_accessible = 'model year';
+  public $has_and_belongs_to_many = 'drivers';
+  function description(){
+    return implode(' ', array($this->year, $this->color, $this->model));
+  }
+}
+class Driver extends MiniActiveRecord{
+  public $validations = 'presence:name';
+  public $attr_accessible = 'name';
+  public $has_and_belongs_to_many = 'cars';
+}
+//create some empty instances to work with
+$car = new Car();
+$driver = new Driver();
+$mini = $car->build(a('model:Mini, year:2012, color:red'));
+//#build creates the object in memory, but doesn't persist it
+$mini->save();
+$walt = $driver->create(a('name: Walter'));
+//#create saves the object directly
+$mini->add_driver($walt);
+//$mini->drivers is now an array containing $walt
+$mini->save();
+//this relationship is saved to the database
+?>
 ```
