@@ -589,7 +589,7 @@ class MiniActiveRecord{
    */
   
   function dirty(){
-    return $this->_original == $this->hash_values();
+    return $this->_original != $this->hash_values();
   }
   
   /**
