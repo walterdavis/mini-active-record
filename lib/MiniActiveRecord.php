@@ -842,7 +842,7 @@ class MiniActiveRecord{
   }
   
   /**
-   * magic setters -- called when a function doesn't exist
+   * method_missing (sorta) -- called when a function doesn't exist
    *
    * @param string $name function called
    * @param array $arguments 
