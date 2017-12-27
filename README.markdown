@@ -1,4 +1,4 @@
-#MiniActiveRecord
+# MiniActiveRecord
 
 MiniActiveRecord is the spiritual successor to MyActiveRecord, by Jake Grimley. Like that library, it aims to provide a simple, fast ORM in PHP to implement Martin Fowler's ActiveRecord pattern. It looks longingly at Rails' implementation of the same pattern, and borrows some of its tricks. The design goal is to reduce the number of lines of code needed to get something done, rather than to provide a textbook example of pure performance-centered programming.
 
@@ -6,7 +6,7 @@ MiniActiveRecord requires PHP 5.1 or better, and has only been tested with 5.3. 
 
 It is developed with a zero-errors policy; no function calls are silenced with an `@`, and error reporting is on and set to `E_ALL` when `MAR_DEVELOPER_MODE` is set to `true`. Naturally, you should disable this preference in production.
 
-##MIT License:
+## MIT License:
 
 >Copyright (c) 2013 Walter Lee Davis
 
@@ -16,7 +16,7 @@ It is developed with a zero-errors policy; no function calls are silenced with a
 
 >THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-##Requirements:
+## Requirements:
 
 * PHP >= 5.1 (5.3 recommended).
 * A database (MySQL or any other supported by PDO), accessible to your script.
@@ -24,7 +24,7 @@ It is developed with a zero-errors policy; no function calls are silenced with a
 * The primary key must be named `id` and must be auto-incrementing
 * If you are implementing many-to-many (`has_and_belongs_to_many`) relationships, you must follow the Rails convention and name your join table `[first class name plural]_[second class name plural]`, using alphabetical order. `cars_drivers`, for example.
 
-##Sugars:
+## Sugars:
 
 * If you include a column named `updated_at` or `created_at`, defined as a `DATETIME`, the proper thing will happen automagically!
 * To use Single Table Inheritance, add a column named `type` in the table containing the proper name of the subclass.
@@ -33,7 +33,7 @@ It is developed with a zero-errors policy; no function calls are silenced with a
 * Magic "finders": `$car->find_by_model_and_year('jetta', 2001)` or `$car->find_all_by_model('jetta')` do what you'd expect. There's also the `$car->find_or_create_by_name_and_year('Mini',2012)` goodness you didn't know you were looking for.
 
     
-##Models
+## Models
 
 Each model in your application will be represented by a subclass of MiniActiveRecord. This allows you to create a rich application with only a few lines of code. When a new instance of the class is created, a reflection of the database structure is used to pre-populate that instance with default values, and to set up the "setters" and "getters" needed to persist it. Much of this is done using metaprogramming in the `__call`, `__set`, and `__get` "magic" functions, as well as the `__construct` initializer.
 
@@ -49,7 +49,7 @@ class Car extends MiniActiveRecord{
 
 Now, even if someone constructs their own form and sends it to your controller, changes will not be accepted on any other attribute in your model when the `populate()` method executes.
 
-##Relationships:
+## Relationships:
 
 MiniActiveRecord follows Rails' conventions when defining relationships between models. You declare these relationships in your models once, and then can use magic "getters" and "setters" to read and populate them. The following relationships are supported:
 
@@ -60,7 +60,7 @@ MiniActiveRecord follows Rails' conventions when defining relationships between 
 
 These relationships are maintained automatically as long as you use the setter and getter functions provided. When you save a parent record, all associated children are saved as well.
 
-##Validations:
+## Validations:
 
 Each model has basic validations built into it, and you can extend your own models with custom validations that will run before an object is saved (or at any time with the `validate()` function). The following core validations are provided:
 
@@ -105,7 +105,7 @@ class Foo extends MiniActiveRecord{
 
 At any point, a record may be inspected for errors with the `get_errors()` function. The result will only be accurate if validations have been performed, so if you are calling it outside of the normal save loop, you should call `validate()` on your object first.
 
-##Callbacks:
+## Callbacks:
 
 The `save()` function calls a set of callbacks as it executes. These are:
 
@@ -117,7 +117,7 @@ The `save()` function calls a set of callbacks as it executes. These are:
 6. `update_associations()` Automatically persist all associated records.
 7. `after_save()` (or `after_create()` if the object is new) A user-defined function that runs after the save. Must include a call to `save_without_callbacks()` to update any changed values.
 
-##Example:
+## Example:
 
 ```php
 <?php
